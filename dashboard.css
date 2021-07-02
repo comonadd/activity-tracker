@@ -1,0 +1,11 @@
+.day {
+  margin-bottom: 8px;
+}
+
+.day__title {
+  font-size: 18px;
+}
+
+.day__record {
+  font-size: 16px;
+}
