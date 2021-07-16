@@ -48,7 +48,6 @@ module.exports = {
   devtool: DEV ? "inline-source-map" : "source-map", // enum
   context: __dirname, // string (absolute path!)
   target: "web", // enum
-  stats: "errors-only",
   plugins: [
      new CopyPlugin({
       patterns: [
