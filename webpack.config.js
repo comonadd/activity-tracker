@@ -56,6 +56,7 @@ module.exports = {
         { from: `${SRC}/popup.css`, to: BUILD },
         { from: `${SRC}/dashboard.html`, to: BUILD },
         { from: `${SRC}/dashboard.css`, to: BUILD },
+        { from: `${SRC}/manifest.json`, to: BUILD },
       ],
     }),
   ],
