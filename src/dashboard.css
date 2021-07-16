@@ -6,6 +6,14 @@
   font-size: 18px;
 }
 
-.day__record {
+.day-record {
   font-size: 16px;
+}
+
+.day-record__time {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.day-record__url {
 }

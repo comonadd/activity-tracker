@@ -9,7 +9,8 @@
     "moduleResolution": "node",
     "noImplicitAny": true,
     "preserveConstEnums": true,
-    "rootDir": "src"
+    "rootDir": "src",
+    "keyofStringsOnly": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [

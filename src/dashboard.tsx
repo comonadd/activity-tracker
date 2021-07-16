@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
+import { populateStorageWithRandomData } from "./util";
+import {
+  DB_NAME,
+  TRACK_INFO_STORE_NAME,
+  ACTIVITY_UNDEFINED,
+  DEFAULT_ACTIVITY_TYPES,
+  DEFAULT_ACTIVITY_MATCHER,
+  DEFAULT_CONFIG,
+} from "./constants";
+import { DbHandle, Configuration, TrackInfoRecord } from "./types";
+import { openIDB } from "./db";
 
 interface PageInfo {
   url: string;
@@ -21,20 +32,7 @@ interface TrackedInfo {
 
 const items = document.querySelector(".items");
 
-// maybe sort by date before showing
-
-chrome.storage.sync.get("trackedInfo", (data) => {
-  console.log("what we have");
-  console.log(data);
-  const { trackedInfo } = data;
-  const ta = trackedInfo.timeArray;
-  for (let day in ta) {
-    const content = `
-`;
-    items.innerHTML += content;
-  }
-});
-
+// TODO: Implement automatic sync
 function useChromeStorage<T>(key: string): [T, (v: T) => void] {
   const [data, setData] = useState<T | null>(null);
   useEffect(() => {
@@ -56,20 +54,77 @@ function useChromeStorage<T>(key: string): [T, (v: T) => void] {
   return [data, setNewValue];
 }
 
+function useIndexedDbHandle(): DbHandle {
+  const [handle, setHandle] = React.useState<DbHandle>(null);
+  React.useEffect(() => {
+    (async () => {
+      const db = await openIDB();
+      setHandle(db);
+    })();
+  }, []);
+  return handle;
+}
+
+function useIndexedDbGetAllFromStore<T>(dbHandle: DbHandle, storeName: string): T[] | null {
+  const [data, setData] = React.useState<T[] | null>(null);
+  React.useMemo(() => {
+    if (dbHandle === null) return;
+    const tx = dbHandle.transaction(storeName, "readonly");
+    const store = tx.objectStore(storeName);
+    (async () => {
+      const result = await store.getAll() as any;
+      setData(result);
+    })();
+  }, [dbHandle]);
+  return data;
+}
+
+type TrackedDay = {
+  title: string;
+  date: number;
+  records: TrackInfoRecord[];
+};
+
 const Dashboard = () => {
-  const [trackedInfo, setTrackedInfo] = useChromeStorage<TrackedInfo>("trackedInfo");
-  const ta = trackedInfo?.timeArray || {};
+  const [config, setConfig] = useChromeStorage<Configuration<any>>("tracker-config");
+  const dbHandle = useIndexedDbHandle();
+  const trackedInfo = useIndexedDbGetAllFromStore<TrackInfoRecord>(dbHandle, TRACK_INFO_STORE_NAME);
+  const trackedRecordsGrouped: TrackedDay[] = trackedInfo && trackedInfo.length !== 0
+    ? [{ date: trackedInfo?.[0].date, title: "Hello", records: trackedInfo }]
+    : [];
+  // maybe sort by date before showing
+  const ta = trackedInfo;
+  console.log(ta);
+  React.useEffect(() => {
+    if (config === null) {
+      setConfig(DEFAULT_CONFIG);
+    }
+  }, []);
   return (
     <div>
       <h1>Hello this is dashboard</h1>
-      {Object.keys(ta).map((dayKey) => {
-        const dayTitle = dayKey;
-        const dayRecords = ta[dayKey];
+      <div>
+        <button onClick={() => populateStorageWithRandomData(config, dbHandle)}>
+          Populate storage with random data
+        </button>
+      </div>
+      {trackedRecordsGrouped.map(({ date, title, records }: TrackedDay) => {
         return (
-          <div className="day">
-            <div className="day__title">{dayTitle}</div>
-            {dayRecords.map((record: DayRecord) => {
-              return <div className="day__record">{record.pageInfo.url}</div>;
+          <div className="day" key={date}>
+            <div className="day__title">{title}</div>
+            {records.map(({ url, date }: TrackInfoRecord, idx: number) => {
+              const dateStart = new Date(date);
+              const timeS = dateStart.toLocaleString(navigator.language, {
+                hourCycle: "h23",
+                hour: "2-digit",
+                minute: "2-digit",
+              } as any);
+              return (
+                <div key={idx} className="day-record">
+                  <span className="day-record__time">{timeS}</span>
+                  <span className="day-record__url">{url}</span>
+                </div>
+              );
             })}
           </div>
         );
