@@ -5,7 +5,8 @@ import {
   DEFAULT_ACTIVITY_TYPES,
   DEFAULT_ACTIVITY_MATCHER,
 } from "./constants";
-import { DbHandle, ActTypeKey, Configuration } from "./types";
+import { ActivityType, TrackInfoRecord, DbHandle, ActTypeKey, Configuration } from "./types";
+import { addTrackedItem } from "./db";
 
 const URL_SELECTION = [
   "https://news.ycombinator.com",
@@ -33,7 +34,10 @@ const randomUrlPath = () => {
   return resPath;
 };
 
-export function calculateUrlType<AK extends ActTypeKey>(config: Configuration<AK>, url: string) {
+export function calculateUrlType<AK extends ActTypeKey>(
+  config: Configuration<AK>,
+  url: string,
+): ActivityType {
   const urlDomain = new URL(url).hostname;
   const matchers = Object.keys(config.matcher);
   let at = config.matcher[urlDomain];
@@ -44,7 +48,7 @@ export function calculateUrlType<AK extends ActTypeKey>(config: Configuration<AK
         break;
       }
     }
-    if (at === undefined) return ACTIVITY_UNDEFINED;
+    if (at === undefined) return null;
   }
   return at;
 }
@@ -80,15 +84,13 @@ export async function populateStorageWithRandomData<AK extends ActTypeKey>(
   const randomRecords = generateRandomRecords(config, 3, 5, new Date(2012, 1, 1));
   for (let { url } of randomRecords) {
     setTimeout(async () => {
-      const item = {
+      const item: TrackInfoRecord = {
         url,
         date: new Date().getTime(),
         type: calculateUrlType(config, url),
       };
       console.log(item);
-      const tx = db.transaction(TRACK_INFO_STORE_NAME, "readwrite");
-      const store = tx.objectStore(TRACK_INFO_STORE_NAME);
-      store.add(item);
+      addTrackedItem(db, item);
     }, 5);
   }
 }

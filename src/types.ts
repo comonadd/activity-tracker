@@ -11,9 +11,10 @@ export type Configuration<AK extends ActTypeKey> = {
   // mapping from regexp to activity id
   matcher: ActivityMatcher<AK>;
 };
+export type ActivityType = string | null;
 export interface TrackInfoRecord {
   url: string;
   date: number;
-  type: string;
+  type: ActivityType;
 }
 export type DbHandle = any | null;

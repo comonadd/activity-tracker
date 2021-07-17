@@ -1,5 +1,6 @@
 import * as idb from "idb";
 import { DB_NAME, TRACK_INFO_STORE_NAME } from "./constants";
+import { TrackInfoRecord, DbHandle } from "./types";
 
 export const openIDB = async () => {
   return await idb.openDB(DB_NAME, 1, {
@@ -12,4 +13,10 @@ export const openIDB = async () => {
       }
     },
   });
+};
+
+export const addTrackedItem = async (db: DbHandle, item: TrackInfoRecord) => {
+  const tx = db.transaction(TRACK_INFO_STORE_NAME, "readwrite");
+  const store = tx.objectStore(TRACK_INFO_STORE_NAME);
+  await store.add(item);
 };

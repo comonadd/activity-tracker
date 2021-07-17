@@ -10,8 +10,8 @@ module.exports = {
   mode: DEV ? "development" : "production",
   entry: {
       "dashboard": `${SRC}/dashboard.tsx`,
-      "popup": `${SRC}/popup.js`,
-      "background": `${SRC}/background.js`,
+      "popup": `${SRC}/popup.ts`,
+      "background": `${SRC}/background.ts`,
   },
   output: {
     path: BUILD,
