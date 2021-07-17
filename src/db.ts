@@ -1,6 +1,6 @@
 import * as idb from "idb";
 import { DB_NAME, TRACK_INFO_STORE_NAME } from "./constants";
-import { TrackInfoRecord, DbHandle } from "./types";
+import { Configuration, ActTypeKey, TrackInfoRecord, DbHandle } from "./types";
 
 export const openIDB = async () => {
   return await idb.openDB(DB_NAME, 1, {
@@ -20,3 +20,16 @@ export const addTrackedItem = async (db: DbHandle, item: TrackInfoRecord) => {
   const store = tx.objectStore(TRACK_INFO_STORE_NAME);
   await store.add(item);
 };
+
+const clearStorage = async (db: DbHandle, sname: string) => {
+  const tx = db.transaction(sname, "readwrite");
+  const store = tx.objectStore(sname);
+  await store.clear();
+};
+
+export async function clearTrackingStorage<AK extends ActTypeKey>(
+  config: Configuration<AK>,
+  db: DbHandle,
+) {
+  await clearStorage(db, TRACK_INFO_STORE_NAME);
+}

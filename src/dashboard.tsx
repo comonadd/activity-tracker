@@ -10,7 +10,7 @@ import {
   DEFAULT_CONFIG,
 } from "./constants";
 import { DbHandle, Configuration, TrackInfoRecord } from "./types";
-import { openIDB } from "./db";
+import { openIDB, clearTrackingStorage } from "./db";
 
 interface PageInfo {
   url: string;
@@ -107,6 +107,9 @@ const Dashboard = () => {
         <button onClick={() => populateStorageWithRandomData(config, dbHandle)}>
           Populate storage with random data
         </button>
+        <button onClick={() => clearTrackingStorage(config, dbHandle)}>
+          Clear storage
+        </button>
       </div>
       {trackedRecordsGrouped.map(({ date, title, records }: TrackedDay) => {
         return (
@@ -116,8 +119,10 @@ const Dashboard = () => {
               const dateStart = new Date(date);
               const timeS = dateStart.toLocaleString(navigator.language, {
                 hourCycle: "h23",
-                hour: "2-digit",
-                minute: "2-digit",
+                //year: "4-digit",
+                //day: "2-digit",
+                //hour: "2-digit",
+                //minute: "2-digit",
               } as any);
               return (
                 <div key={idx} className="day-record">

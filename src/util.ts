@@ -58,17 +58,18 @@ export function generateRandomRecords<AK extends ActTypeKey>(
   nDays: number,
   nRecordsPerDay: number,
   dateStart: Date,
-) {
+): TrackInfoRecord[] {
   let records = [];
   const startHour = Math.round(Math.random() * 24);
   const endHour = Math.min(23, startHour + Math.round(Math.random() * 3));
   const uds = dateStart.getTime();
   for (let day = 0; day < nDays; ++day) {
-    const dds = uds + day * 1000;
+    const dds = uds + day*24*60*60*1000;
     for (let r = 0; r < nRecordsPerDay; ++r) {
       const url = randomUrl() + randomUrlPath();
+      const date = new Date(dds + r * Math.round(Math.random() * 180) * 60 * 1000)
       records.push({
-        date: dds + r * 100,
+        date: date.getTime(),
         url,
         type: calculateUrlType(config, url),
       });
@@ -77,20 +78,23 @@ export function generateRandomRecords<AK extends ActTypeKey>(
   return records;
 }
 
+const randIntBetween = (s: number, e: number): number => s + Math.round(Math.random() * (e - s));
+
+const randomDateBetween = (start: Date, end: Date): Date => {
+  const su = start.getTime();
+  const eu = end.getTime();
+  console.assert(eu >= su);
+  return new Date(randIntBetween(su, eu));
+};
+
 export async function populateStorageWithRandomData<AK extends ActTypeKey>(
   config: Configuration<AK>,
   db: DbHandle,
 ) {
-  const randomRecords = generateRandomRecords(config, 3, 5, new Date(2012, 1, 1));
-  for (let { url } of randomRecords) {
-    setTimeout(async () => {
-      const item: TrackInfoRecord = {
-        url,
-        date: new Date().getTime(),
-        type: calculateUrlType(config, url),
-      };
-      console.log(item);
-      addTrackedItem(db, item);
-    }, 5);
+  const startDate = randomDateBetween(new Date(2000, 0, 0), new Date());
+  const randomRecords = generateRandomRecords(config, 3, 5, startDate));
+  for (let i = 0; i < randomRecords.length; ++i) {
+    const item = randomRecords[i];
+    addTrackedItem(db, item);
   }
 }
