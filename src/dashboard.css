@@ -6,6 +6,36 @@
   font-size: 18px;
 }
 
+.day__records {
+  display: block;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+}
+
+.day-header__left {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+}
+
+.day-header__right {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+}
+
+.day-record_type-not-defined {
+  color: red;
+}
+
+.day-detailed-info {
+  display: block;
+}
+
 .day-record {
   font-size: 16px;
 }

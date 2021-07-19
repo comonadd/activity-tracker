@@ -64,10 +64,10 @@ export function generateRandomRecords<AK extends ActTypeKey>(
   const endHour = Math.min(23, startHour + Math.round(Math.random() * 3));
   const uds = dateStart.getTime();
   for (let day = 0; day < nDays; ++day) {
-    const dds = uds + day*24*60*60*1000;
+    const dds = uds + day * 24 * 60 * 60 * 1000;
     for (let r = 0; r < nRecordsPerDay; ++r) {
       const url = randomUrl() + randomUrlPath();
-      const date = new Date(dds + r * Math.round(Math.random() * 180) * 60 * 1000)
+      const date = new Date(dds + r * Math.round(Math.random() * 180) * 60 * 1000);
       records.push({
         date: date.getTime(),
         url,
@@ -92,9 +92,33 @@ export async function populateStorageWithRandomData<AK extends ActTypeKey>(
   db: DbHandle,
 ) {
   const startDate = randomDateBetween(new Date(2000, 0, 0), new Date());
-  const randomRecords = generateRandomRecords(config, 3, 5, startDate));
+  const randomRecords = generateRandomRecords(config, 3, 5, startDate);
   for (let i = 0; i < randomRecords.length; ++i) {
     const item = randomRecords[i];
     addTrackedItem(db, item);
   }
 }
+
+export function rewardForActivityType<AK extends ActTypeKey>(
+  config: Configuration<AK>,
+  at: ActivityType,
+): number {
+  const ati = (config.activityTypes as any)[at];
+  if (ati === undefined) {
+    // TODO: Report to the user
+    console.info(`Couldn't get activity type information from configuration for "${at}"`);
+    return 0;
+  }
+  return ati.reward;
+}
+
+// Productivity is a measure of productive activity during the day. Ranges
+// from 0 to 10, 10 being the highest productivity.
+export const calcProductivityLevelForDay = (config: Configuration<any>, records: TrackInfoRecord[]): number => {
+  let prod = 0;
+  for (let r of records) {
+    const reward = rewardForActivityType(config, r.type);
+    prod += reward;
+  }
+  return prod;
+};
