@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import Button from "@material-ui/core/Button";
 import Accordion from "@material-ui/core/Accordion";
 import AccordionSummary from "@material-ui/core/AccordionSummary";
+import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import AccordionDetails from "@material-ui/core/AccordionDetails";
 import Typography from "@material-ui/core/Typography";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
@@ -21,6 +22,9 @@ import {
 } from "./constants";
 import { DbHandle, Configuration, TrackInfoRecord } from "./types";
 import { openIDB, clearTrackingStorage } from "./db";
+import { createHashHistory, Location } from "history";
+
+const history = createHashHistory();
 
 type CNArg = string[] | Record<string, boolean>;
 const cn = (...cns: CNArg[]): string => {
@@ -42,6 +46,32 @@ const cn = (...cns: CNArg[]): string => {
     }
   }
   return res;
+};
+
+type RouteParams = Record<string, string>;
+interface IRouterContext {
+  params: RouteParams;
+}
+const RouterContext = React.createContext<IRouterContext>({ params: {} });
+// Return all parameters for the current route
+function useParams<T>(): T {
+  const { params } = React.useContext(RouterContext);
+  return (params as any) as T;
+}
+
+const Link = (props: { to: string; children: any } & any) => {
+  return (
+    <a
+      href={props.to}
+      {...props}
+      onClick={(e) => {
+        e.preventDefault();
+        history.push(props.to);
+      }}
+    >
+      {props.children}
+    </a>
+  );
 };
 
 interface PageInfo {
@@ -76,13 +106,10 @@ function useChromeStorage<T>(key: string): [T, (v: T) => void] {
       }
     });
   }, [key]);
-  const setNewValue = React.useCallback(
-    (newValue: T) => {
-      chrome.storage.sync.set({ [key]: newValue });
-      setData(newValue);
-    },
-    [key],
-  );
+  const setNewValue = (newValue: T) => {
+    chrome.storage.sync.set({ [key]: newValue });
+    setData(newValue);
+  };
   return [data, setNewValue];
 }
 
@@ -136,6 +163,56 @@ const unixDuration = (n: number) => {
   return `${hours} HRS, ${minutes} MINUTES`;
 };
 
+const Page = (props: { title: string; children: any }) => {
+  const { title, children } = props;
+  React.useEffect(() => {
+    document.title = title;
+  }, [title]);
+  return <div className="page">{children}</div>;
+};
+
+interface DayPageProps {}
+
+const DayPage = (props: DayPageProps) => {
+  const { year, month, day } = useParams<any>();
+  return (
+    <Page title={`${year}/${month}/${day}`}>
+      <h1>
+        {year}/{month}/{day}
+      </h1>
+    </Page>
+  );
+};
+
+interface MonthPageProps {}
+
+const MonthPage = (props: MonthPageProps) => {
+  const { year, month } = useParams<any>();
+  return (
+    <Page title={`${year}/${month}`}>
+      <h1>
+        {year}/{month}
+      </h1>
+    </Page>
+  );
+};
+
+interface YearPageProps {}
+
+const YearPage = (props: YearPageProps) => {
+  const { year } = useParams<any>();
+  return (
+    <Page title={`Year ${year}`}>
+      <Breadcrumbs aria-label="breadcrumb">
+        <Link color="inherit" to="/">
+          Dashboard
+        </Link>
+      </Breadcrumbs>
+      <h1>{year}</h1>
+    </Page>
+  );
+};
+
 const FullHistoryDay = (props: {
   config: Configuration<any>;
   date: Date;
@@ -147,6 +224,9 @@ const FullHistoryDay = (props: {
   const maxTimestamp = records[records.length - 1].date;
   const dayDuration = maxTimestamp - minTimestamp;
   const productivityLevel = calcProductivityLevelForDay(config, records);
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
   return (
     <Accordion className="day">
       <AccordionSummary
@@ -169,6 +249,17 @@ const FullHistoryDay = (props: {
             </Typography>
             <Typography>{unixDuration(dayDuration)}</Typography>
             <Typography>Productivity: {productivityLevel}</Typography>
+            <Link to={`/${year}/${month}/${day}`}>Details</Link>
+            <Button
+              onClick={() => {
+                history.push(`/${year}/${month}/${day}`);
+              }}
+              variant="outlined"
+              color="primary"
+              disableElevation
+            >
+              Details
+            </Button>
           </div>
         </div>
       </AccordionSummary>
@@ -233,39 +324,124 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="dashboard">
-      <header className="header">
-        <h1>Dashboard</h1>
-        <h2>Full History</h2>
-        <div>
-          <Button
-            onClick={() => populateStorageWithRandomData(config, dbHandle)}
-            variant="contained"
-            color="primary"
-            disableElevation
-          >
-            Populate storage with random data
-          </Button>
-          <Button
-            onClick={() => clearTrackingStorage(config, dbHandle)}
-            variant="contained"
-            color="primary"
-            disableElevation
-          >
-            Clear storage
-          </Button>
+    <Page title="Activity Dashboard">
+      <div className="dashboard">
+        <header className="header">
+          <h1>Dashboard</h1>
+          <h2>Full History</h2>
+          <Link to="/2021">2021</Link>
+          <div>
+            <Button
+              onClick={() => populateStorageWithRandomData(config, dbHandle)}
+              variant="contained"
+              color="primary"
+              disableElevation
+            >
+              Populate storage with random data
+            </Button>
+            <Button
+              onClick={() => clearTrackingStorage(config, dbHandle)}
+              variant="contained"
+              color="primary"
+              disableElevation
+            >
+              Clear storage
+            </Button>
+          </div>
+        </header>
+        <div className="full-history">
+          {allDayDates.map((d: number) => {
+            const records = trackedRecordsGrouped.get(d);
+            const day = new Date(d);
+            return <FullHistoryDay config={config} key={d} date={day} records={records} />;
+          })}
         </div>
-      </header>
-      <div className="full-history">
-        {allDayDates.map((d: number) => {
-          const records = trackedRecordsGrouped.get(d);
-          const day = new Date(d);
-          return <FullHistoryDay config={config} key={d} date={day} records={records} />;
-        })}
       </div>
+    </Page>
+  );
+};
+
+const NotFound = () => {
+  return <Page title="Not found">Not found</Page>;
+};
+
+type RouteMatcher = Map<string, (...args: any[]) => any>;
+
+const routeMatcher: RouteMatcher = new Map([
+  ["/", Dashboard],
+  ["/:year", YearPage],
+  ["/:year/:month", MonthPage],
+  ["/:year/:month/:day", DayPage],
+  ["*", NotFound],
+]);
+
+const A = () => {
+  return (
+    <div>
+      <h1>A</h1>
+      <Link to="/hello">GO TO B</Link>
     </div>
   );
 };
 
+const B = () => {
+  return (
+    <div>
+      <h1>B</h1>
+      <Link to="/">GO TO A</Link>
+    </div>
+  );
+};
+
+/* const routeMatcher: RouteMatcher = new Map([
+ *   ["/", A],
+ *   ["/hello", B],
+ *   ["*", NotFound],
+ * ]);
+ *  */
+const matchLocation = (config: RouteMatcher, loc: Location | null): any | null => {
+  if (loc === null) return null;
+  let p = "";
+  if (loc["key"] !== undefined) {
+    // history module location
+    p = loc.pathname;
+  } else {
+    if (loc.hash.length === 0) {
+      p = "/";
+    } else {
+      p = loc.hash.substr(1, loc.hash.length);
+    }
+  }
+  if (config.has(p)) {
+    return config.get(p);
+  }
+  return config.get("*");
+};
+
+const useLocation = (): Location => {
+  const [location, setLocation] = useState<Location>(window.location as any);
+  React.useEffect(() => {
+    history.listen((update) => {
+      setLocation(update.location);
+    });
+  }, []);
+  return location;
+};
+
+const App = () => {
+  const location = useLocation();
+  const [currRouteParams, setCurrRouteParams] = React.useState<RouteParams>({});
+  React.useEffect(() => {
+    console.log("updated location:");
+    console.log(location);
+  }, [location]);
+  const componentToRender = matchLocation(routeMatcher, location)();
+  return (
+    <RouterContext.Provider value={{ params: currRouteParams }}>
+      <div className="app">{componentToRender}</div>
+    </RouterContext.Provider>
+  );
+};
+
 const rootElem = document.querySelector("#root");
-ReactDOM.render(<Dashboard />, rootElem);
+ReactDOM.render(<App />, rootElem);
