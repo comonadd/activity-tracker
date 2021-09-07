@@ -14,7 +14,7 @@ export type Configuration<AK extends ActTypeKey> = {
 export type ActivityType = string | null;
 export interface TrackInfoRecord {
   url: string;
-  date: number;
+  created: Date;
   type: ActivityType;
 }
 export type DbHandle = any | null;

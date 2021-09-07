@@ -4,13 +4,17 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
+    "target": "es6",
     "jsx": "react",
     "module": "es6",
+    "sourceMap": true,
     "moduleResolution": "node",
     "noImplicitAny": true,
     "preserveConstEnums": true,
     "rootDir": "src",
-    "keyofStringsOnly": true
+    "keyofStringsOnly": true,
+    "lib": ["DOM", "es2020"],
+    "downlevelIteration": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [

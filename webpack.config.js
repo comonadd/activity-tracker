@@ -45,7 +45,7 @@ module.exports = {
       return assetFilename.endsWith('.css') || assetFilename.endsWith('.js');
     }
   },
-  devtool: DEV ? "inline-source-map" : "source-map", // enum
+  devtool: "source-map", // enum
   context: __dirname, // string (absolute path!)
   target: "web", // enum
   plugins: [

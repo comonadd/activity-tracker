@@ -18,7 +18,7 @@ interface TrackerState {
 const trackUrl = async (state: TrackerState, url: string) => {
   const item = {
     url,
-    date: new Date().getTime(),
+    created: new Date(),
     type: calculateUrlType(state.config, url),
   };
   await addTrackedItem(state.dbHandle, item);

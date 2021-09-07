@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useContext, createContext, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import Button from "@material-ui/core/Button";
 import Accordion from "@material-ui/core/Accordion";
@@ -11,6 +11,7 @@ import {
   calcProductivityLevelForDay,
   rewardForActivityType,
   populateStorageWithRandomData,
+  useChromeStorage,
 } from "./util";
 import {
   DB_NAME,
@@ -21,7 +22,13 @@ import {
   DEFAULT_CONFIG,
 } from "./constants";
 import { DbHandle, Configuration, TrackInfoRecord } from "./types";
-import { openIDB, clearTrackingStorage } from "./db";
+import {
+  openIDB,
+  clearTrackingStorage,
+  useIndexedDbGetAllFromStore,
+  useIndexedDbGetAllFromStoreByIndex,
+  useIndexedDbHandle,
+} from "./db";
 import { createHashHistory, Location } from "history";
 
 const history = createHashHistory();
@@ -48,15 +55,21 @@ const cn = (...cns: CNArg[]): string => {
   return res;
 };
 
+interface IAppContext {
+  config: Configuration<any>;
+  setConfig: (s: Configuration<any>) => void;
+}
+const AppContext = createContext<IAppContext>({} as any);
+
 type RouteParams = Record<string, string>;
 interface IRouterContext {
   params: RouteParams;
 }
-const RouterContext = React.createContext<IRouterContext>({ params: {} });
+const RouterContext = createContext<IRouterContext>({ params: {} });
 // Return all parameters for the current route
 function useParams<T>(): T {
   const { params } = React.useContext(RouterContext);
-  return (params as any) as T;
+  return params as any as T;
 }
 
 const Link = (props: { to: string; children: any } & any) => {
@@ -94,50 +107,6 @@ interface TrackedInfo {
 
 const items = document.querySelector(".items");
 
-// TODO: Implement automatic sync
-function useChromeStorage<T>(key: string): [T, (v: T) => void] {
-  const [data, setData] = useState<T | null>(null);
-  useEffect(() => {
-    chrome.storage.sync.get(key, (storageData: any) => {
-      if (storageData) {
-        setData((storageData[key] as any) as T);
-      } else {
-        setData(null);
-      }
-    });
-  }, [key]);
-  const setNewValue = (newValue: T) => {
-    chrome.storage.sync.set({ [key]: newValue });
-    setData(newValue);
-  };
-  return [data, setNewValue];
-}
-
-function useIndexedDbHandle(): DbHandle {
-  const [handle, setHandle] = React.useState<DbHandle>(null);
-  React.useEffect(() => {
-    (async () => {
-      const db = await openIDB();
-      setHandle(db);
-    })();
-  }, []);
-  return handle;
-}
-
-function useIndexedDbGetAllFromStore<T>(dbHandle: DbHandle, storeName: string): T[] | null {
-  const [data, setData] = React.useState<T[] | null>(null);
-  React.useMemo(() => {
-    if (dbHandle === null) return;
-    const tx = dbHandle.transaction(storeName, "readonly");
-    const store = tx.objectStore(storeName);
-    (async () => {
-      const result = (await store.getAll()) as any;
-      setData(result);
-    })();
-  }, [dbHandle]);
-  return data;
-}
-
 type TrackedDay = {
   title: string;
   date: number;
@@ -171,15 +140,60 @@ const Page = (props: { title: string; children: any }) => {
   return <div className="page">{children}</div>;
 };
 
-interface DayPageProps {}
+interface DayPageProps {
+  year: string;
+  month: string;
+  day: string;
+}
+
+const allRecordsForDay = async (
+  db: DbHandle,
+  dayDate: Date
+): Promise<TrackInfoRecord[]> => {
+  const tx = db.transaction(TRACK_INFO_STORE_NAME, "readonly");
+  const store = tx.objectStore(TRACK_INFO_STORE_NAME);
+  const index = store.index("created");
+  const fromDate = dayDate;
+  const toDate = new Date(
+    fromDate.getFullYear(),
+    fromDate.getMonth(),
+    fromDate.getDate() + 1,
+  );
+  const range = IDBKeyRange.bound(fromDate, toDate);
+  const res = [];
+  for await (const cursor of index.iterate(range)) {
+    const r = { ...cursor.value };
+    res.push(r);
+  }
+  return res;
+};
 
 const DayPage = (props: DayPageProps) => {
-  const { year, month, day } = useParams<any>();
+  const { year, month, day } = props;
+  const { config } = useContext(AppContext);
+  const db = useIndexedDbHandle();
+  const [records, setRecords] = useState<TrackInfoRecord[]>([]);
+  const dayDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  useEffect(() => {
+    (async () => {
+      if (db === null) return;
+      const res = await allRecordsForDay(db, dayDate);
+      setRecords(res);
+    })();
+  }, [db]);
   return (
     <Page title={`${year}/${month}/${day}`}>
-      <h1>
-        {year}/{month}/{day}
-      </h1>
+      <Breadcrumbs aria-label="breadcrumb">
+        <Link color="inherit" to="/">
+          Dashboard
+        </Link>
+      </Breadcrumbs>
+      <Typography component="h1" variant="h4">
+        The day of {year}/{month}/{day}
+      </Typography>
+      <div className="full-history">
+        <FullHistoryDay records={records} config={config} date={dayDate} />
+      </div>
     </Page>
   );
 };
@@ -220,12 +234,13 @@ const FullHistoryDay = (props: {
 }) => {
   const { records, date, config } = props;
   // assume records are sorted
-  const minTimestamp = records[0].date;
-  const maxTimestamp = records[records.length - 1].date;
-  const dayDuration = maxTimestamp - minTimestamp;
+  const minTimestamp = records.length !== 0 ? records[0].created : new Date();
+  const maxTimestamp =
+    records.length !== 0 ? records[records.length - 1].created : new Date();
+  const dayDuration = maxTimestamp.getTime() - minTimestamp.getTime();
   const productivityLevel = calcProductivityLevelForDay(config, records);
   const year = date.getFullYear();
-  const month = date.getMonth();
+  const month = date.getMonth() + 1;
   const day = date.getDate();
   return (
     <Accordion className="day">
@@ -236,7 +251,7 @@ const FullHistoryDay = (props: {
       >
         <div className="day-header">
           <div className="day-header__left">
-            <Typography className="day__title">
+            <Typography className="day__title" title={date.toString()}>
               <b>
                 {date.toLocaleString(navigator.language, {
                   hourCycle: "h23",
@@ -266,28 +281,38 @@ const FullHistoryDay = (props: {
       <AccordionDetails>
         <div className="day-detailed-info">
           <div className="day-detailed-info__header">
-            <Typography>Start: {dateFormatHMS(new Date(minTimestamp))}</Typography>
-            <Typography>End: {dateFormatHMS(new Date(maxTimestamp))}</Typography>
+            <Typography>
+              Start: {dateFormatHMS(new Date(minTimestamp))}
+            </Typography>
+            <Typography>
+              End: {dateFormatHMS(new Date(maxTimestamp))}
+            </Typography>
           </div>
           <div className="day__records">
-            {records.map(({ url, date, type }: TrackInfoRecord, idx: number) => {
-              const isTypeDefined = type !== null;
-              const dateStart = new Date(date);
-              const timeS = dateStart.toLocaleString(navigator.language, {
-                hourCycle: "h23",
-                //year: "4-digit",
-                //day: "2-digit",
-                //hour: "2-digit",
-                //minute: "2-digit",
-              } as any);
-              const c = cn({ "day-record": true, "day-record_type-not-defined": !isTypeDefined });
-              return (
-                <div key={idx} className={c}>
-                  <span className="day-record__time">{timeS}</span>
-                  <span className="day-record__url">{url}</span>
-                </div>
-              );
-            })}
+            {records.map(
+              ({ url, created, type }: TrackInfoRecord, idx: number) => {
+                const date = created;
+                const isTypeDefined = type !== null;
+                const dateStart = new Date(date);
+                const timeS = dateStart.toLocaleString(navigator.language, {
+                  hourCycle: "h23",
+                  //year: "4-digit",
+                  //day: "2-digit",
+                  //hour: "2-digit",
+                  //minute: "2-digit",
+                } as any);
+                const c = cn({
+                  "day-record": true,
+                  "day-record_type-not-defined": !isTypeDefined,
+                });
+                return (
+                  <div key={idx} className={c}>
+                    <span className="day-record__time">{timeS}</span>
+                    <span className="day-record__url">{url}</span>
+                  </div>
+                );
+              }
+            )}
           </div>
         </div>
       </AccordionDetails>
@@ -296,32 +321,34 @@ const FullHistoryDay = (props: {
 };
 
 const Dashboard = () => {
-  const [config, setConfig] = useChromeStorage<Configuration<any>>("tracker-config");
+  const { config, setConfig } = useContext(AppContext);
   const dbHandle = useIndexedDbHandle();
-  const trackedRecords = useIndexedDbGetAllFromStore<TrackInfoRecord>(
+  const trackedRecords = useIndexedDbGetAllFromStoreByIndex<TrackInfoRecord>(
     dbHandle,
     TRACK_INFO_STORE_NAME,
+    "created"
   );
   const trackedRecordsGrouped: TrackedRecordsGrouped = React.useMemo(() => {
     if (!trackedRecords || trackedRecords.length === 0) return new Map();
     return trackedRecords.reduce((acc: TrackedRecordsGrouped, rec) => {
-      const d = new Date(rec.date);
-      const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      if (acc.get(day.getTime()) === undefined) acc.set(day.getTime(), []);
-      acc.get(day.getTime()).push(rec);
+      const day = rec.created;
+      const d = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+      if (acc.get(d.getTime()) === undefined) acc.set(d.getTime(), []);
+      acc.get(d.getTime()).push(rec);
       return acc;
     }, new Map() as TrackedRecordsGrouped);
   }, [trackedRecords]);
   // maybe sort by date before showing
-  console.log(trackedRecordsGrouped);
   React.useEffect(() => {
     if (config === null) {
       setConfig(DEFAULT_CONFIG);
     }
   }, []);
-  const allDayDates = Array.from(trackedRecordsGrouped.keys()).sort((a: number, b: number) => {
-    return b - a;
-  });
+  const allDayDates = Array.from(trackedRecordsGrouped.keys()).sort(
+    (a: number, b: number) => {
+      return a - b;
+    }
+  );
 
   return (
     <Page title="Activity Dashboard">
@@ -350,10 +377,17 @@ const Dashboard = () => {
           </div>
         </header>
         <div className="full-history">
-          {allDayDates.map((d: number) => {
+          {allDayDates.map((d) => {
             const records = trackedRecordsGrouped.get(d);
             const day = new Date(d);
-            return <FullHistoryDay config={config} key={d} date={day} records={records} />;
+            return (
+              <FullHistoryDay
+                config={config}
+                key={d}
+                date={day}
+                records={records}
+              />
+            );
           })}
         </div>
       </div>
@@ -365,41 +399,23 @@ const NotFound = () => {
   return <Page title="Not found">Not found</Page>;
 };
 
-type RouteMatcher = Map<string, (...args: any[]) => any>;
+type RouteMatcher = [RegExp, (...args: any[]) => any][];
 
-const routeMatcher: RouteMatcher = new Map([
-  ["/", Dashboard],
-  ["/:year", YearPage],
-  ["/:year/:month", MonthPage],
-  ["/:year/:month/:day", DayPage],
-  ["*", NotFound],
-]);
+const routeMatcher: RouteMatcher = [
+  [/^\/$/g, (params) => <Dashboard />],
+  [/^\/(\d+)\/(\d+)\/?$/g, (params) => <YearPage />],
+  [/^\/(\d+)\/(\d+)\/?$/g, (params) => <MonthPage />],
+  [
+    /^\/(\d+)\/(\d+)\/(\d+)\/?$/g,
+    ([year, month, day]) => <DayPage year={year} month={month} day={day} />,
+  ],
+  [/.*/g, (params) => <NotFound />],
+];
 
-const A = () => {
-  return (
-    <div>
-      <h1>A</h1>
-      <Link to="/hello">GO TO B</Link>
-    </div>
-  );
-};
-
-const B = () => {
-  return (
-    <div>
-      <h1>B</h1>
-      <Link to="/">GO TO A</Link>
-    </div>
-  );
-};
-
-/* const routeMatcher: RouteMatcher = new Map([
- *   ["/", A],
- *   ["/hello", B],
- *   ["*", NotFound],
- * ]);
- *  */
-const matchLocation = (config: RouteMatcher, loc: Location | null): any | null => {
+const matchLocation = (
+  config: RouteMatcher,
+  loc: Location | null
+): any | null => {
   if (loc === null) return null;
   let p = "";
   if (loc["key"] !== undefined) {
@@ -412,10 +428,22 @@ const matchLocation = (config: RouteMatcher, loc: Location | null): any | null =
       p = loc.hash.substr(1, loc.hash.length);
     }
   }
-  if (config.has(p)) {
-    return config.get(p);
+  for (let pair of config) {
+    const r = pair[0];
+    if (new RegExp(r).test(p)) {
+      // matches
+      const mm = p.matchAll(new RegExp(r));
+      let m = [...mm][0];
+      let params = m || [];
+      delete params["index"];
+      delete params["input"];
+      delete params["groups"];
+      params = params.slice(1);
+      const c = pair[1];
+      return c(params);
+    }
   }
-  return config.get("*");
+  return () => null as any;
 };
 
 const useLocation = (): Location => {
@@ -431,14 +459,14 @@ const useLocation = (): Location => {
 const App = () => {
   const location = useLocation();
   const [currRouteParams, setCurrRouteParams] = React.useState<RouteParams>({});
-  React.useEffect(() => {
-    console.log("updated location:");
-    console.log(location);
-  }, [location]);
-  const componentToRender = matchLocation(routeMatcher, location)();
+  const [config, setConfig] =
+    useChromeStorage<Configuration<any>>("tracker-config");
+  const componentToRender = matchLocation(routeMatcher, location);
   return (
     <RouterContext.Provider value={{ params: currRouteParams }}>
-      <div className="app">{componentToRender}</div>
+      <AppContext.Provider value={{ config, setConfig }}>
+        <div className="app">{componentToRender}</div>
+      </AppContext.Provider>
     </RouterContext.Provider>
   );
 };
