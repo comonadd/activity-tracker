@@ -1,12 +1,24 @@
-import React, { useContext, createContext, useState, useEffect } from "react";
+import React, {
+  useMemo,
+  useContext,
+  createContext,
+  useState,
+  useEffect,
+} from "react";
 import ReactDOM from "react-dom";
 import Button from "@material-ui/core/Button";
+import IconButton from "@material-ui/core/IconButton";
 import Accordion from "@material-ui/core/Accordion";
+import Grid from "@material-ui/core/Grid";
 import AccordionSummary from "@material-ui/core/AccordionSummary";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
+import Card from "@material-ui/core/Card";
+import Paper from "@material-ui/core/Paper";
 import AccordionDetails from "@material-ui/core/AccordionDetails";
 import Typography from "@material-ui/core/Typography";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import TodayIcon from "@material-ui/icons/Today";
+import ListIcon from "@material-ui/icons/List";
 import {
   calcProductivityLevelForDay,
   rewardForActivityType,
@@ -157,7 +169,7 @@ const allRecordsForDay = async (
   const toDate = new Date(
     fromDate.getFullYear(),
     fromDate.getMonth(),
-    fromDate.getDate() + 1,
+    fromDate.getDate() + 1
   );
   const range = IDBKeyRange.bound(fromDate, toDate);
   const res = [];
@@ -227,6 +239,15 @@ const YearPage = (props: YearPageProps) => {
   );
 };
 
+const dateToString = (date: Date) =>
+  date.toLocaleString(navigator.language, {
+    hourCycle: "h23",
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric",
+  } as any);
+
 const FullHistoryDay = (props: {
   config: Configuration<any>;
   date: Date;
@@ -252,15 +273,7 @@ const FullHistoryDay = (props: {
         <div className="day-header">
           <div className="day-header__left">
             <Typography className="day__title" title={date.toString()}>
-              <b>
-                {date.toLocaleString(navigator.language, {
-                  hourCycle: "h23",
-                  weekday: "short",
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "numeric",
-                } as any)}
-              </b>
+              <b>{dateToString(date)}</b>
             </Typography>
             <Typography>{unixDuration(dayDuration)}</Typography>
             <Typography>Productivity: {productivityLevel}</Typography>
@@ -294,7 +307,7 @@ const FullHistoryDay = (props: {
                 const date = created;
                 const isTypeDefined = type !== null;
                 const dateStart = new Date(date);
-                const timeS = dateStart.toLocaleString(navigator.language, {
+                const timeS = date.toLocaleString(navigator.language, {
                   hourCycle: "h23",
                   //year: "4-digit",
                   //day: "2-digit",
@@ -319,6 +332,13 @@ const FullHistoryDay = (props: {
     </Accordion>
   );
 };
+
+enum Mode {
+  Calendar = 0,
+  List = 1,
+}
+const firstViewingMode = Mode.Calendar;
+const viewingModesAvailable = Object.keys(Mode).length / 2;
 
 const Dashboard = () => {
   const { config, setConfig } = useContext(AppContext);
@@ -349,47 +369,160 @@ const Dashboard = () => {
       return a - b;
     }
   );
+  const [viewingMode, setViewingMode] = useState<Mode>(Mode.Calendar);
+  const viewingModeIcon = useMemo(() => {
+    switch (viewingMode) {
+      case Mode.Calendar:
+        {
+          return <TodayIcon />;
+        }
+        break;
+      case Mode.List:
+        {
+          return <ListIcon />;
+        }
+        break;
+      default:
+        {
+          return null;
+        }
+        break;
+    }
+  }, [viewingMode]);
+  const toggleViewingMode = () => {
+    let next = (viewingMode as number) + 1;
+    if (next >= viewingModesAvailable) next = firstViewingMode;
+    setViewingMode(next);
+  };
+
+  const historyRendered = useMemo(() => {
+    switch (viewingMode) {
+      case Mode.List:
+        {
+          return (
+            <div className="full-history">
+              {allDayDates.map((d) => {
+                const records = trackedRecordsGrouped.get(d);
+                const day = new Date(d);
+                return (
+                  <FullHistoryDay
+                    config={config}
+                    key={d}
+                    date={day}
+                    records={records}
+                  />
+                );
+              })}
+            </div>
+          );
+        }
+        break;
+      case Mode.Calendar:
+        {
+          const lowColor = [20, 20, 20];
+          const highColor = [0, 255, 0];
+          const ck = highColor.map((v, i) => v - lowColor[i]);
+          const highColorBound = 255;
+          const highProbBound = 1000;
+          const lowProbBound = 0;
+          const rangeK = highColorBound / highProbBound;
+          return (
+            <div className="full-history-calendar">
+              {allDayDates.map((d) => {
+                const records = trackedRecordsGrouped.get(d);
+                const dayDate = new Date(d);
+                const year = dayDate.getFullYear();
+                const month = dayDate.getMonth() + 1;
+                const day = dayDate.getDate();
+                // shrink productivity level into a color between lowColorBound and highColorBound
+                let productivityLevel = calcProductivityLevelForDay(
+                  config,
+                  records
+                );
+                productivityLevel = Math.min(
+                  Math.max(productivityLevel, lowProbBound),
+                  highProbBound
+                );
+                const pK = rangeK * productivityLevel;
+                const pPerc = pK / 255;
+                const r = lowColor[0] + ck[0] * pPerc;
+                const g = lowColor[1] + ck[1] * pPerc;
+                const b = lowColor[2] + ck[2] * pPerc;
+                const backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                return (
+                  <Paper
+                    elevation={1}
+                    key={dayDate.getTime()}
+                    className="calendar-item"
+                    onClick={() => history.push(`/${year}/${month}/${day}`)}
+                    style={{ backgroundColor }}
+                    title={`Productivity: ${productivityLevel}`}
+                  >
+                    <Typography variant="subtitle2">
+                      {dateToString(dayDate)}
+                    </Typography>
+                  </Paper>
+                );
+              })}
+            </div>
+          );
+        }
+        break;
+      default:
+        {
+          console.error("Not implemented");
+          return null;
+        }
+        break;
+    }
+  }, [trackedRecordsGrouped]);
 
   return (
     <Page title="Activity Dashboard">
       <div className="dashboard">
-        <header className="header">
-          <h1>Dashboard</h1>
-          <h2>Full History</h2>
-          <Link to="/2021">2021</Link>
-          <div>
-            <Button
-              onClick={() => populateStorageWithRandomData(config, dbHandle)}
-              variant="contained"
-              color="primary"
-              disableElevation
-            >
-              Populate storage with random data
-            </Button>
-            <Button
-              onClick={() => clearTrackingStorage(config, dbHandle)}
-              variant="contained"
-              color="primary"
-              disableElevation
-            >
-              Clear storage
-            </Button>
+        <header className="header df fsb">
+          <Typography component="h1" variant="h3">
+            Dashboard
+          </Typography>
+          <div className="dashboard-controls fcv">
+            <Grid container spacing={1} className="fcv">
+              <Grid item>
+                <Button
+                  onClick={() =>
+                    populateStorageWithRandomData(config, dbHandle)
+                  }
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  disableElevation
+                >
+                  Populate storage with random data
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button
+                  onClick={() => clearTrackingStorage(config, dbHandle)}
+                  variant="contained"
+                  size="large"
+                  color="primary"
+                  disableElevation
+                >
+                  Clear storage
+                </Button>
+              </Grid>
+              <Grid item>
+                <IconButton
+                  onClick={() => toggleViewingMode()}
+                  size="medium"
+                  title="Toggle view"
+                >
+                  {viewingModeIcon}
+                </IconButton>
+              </Grid>
+            </Grid>
           </div>
         </header>
-        <div className="full-history">
-          {allDayDates.map((d) => {
-            const records = trackedRecordsGrouped.get(d);
-            const day = new Date(d);
-            return (
-              <FullHistoryDay
-                config={config}
-                key={d}
-                date={day}
-                records={records}
-              />
-            );
-          })}
-        </div>
+        {historyRendered}
       </div>
     </Page>
   );
