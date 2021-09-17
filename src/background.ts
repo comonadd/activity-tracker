@@ -15,7 +15,13 @@ interface TrackerState {
   dbHandle: DbHandle;
 }
 
+const urlIgnoreRegexp = /chrome:\/\/.*/;
+const shouldIgnoreUrl = (url: string) => {
+  return urlIgnoreRegexp.test(url);
+};
+
 const trackUrl = async (state: TrackerState, url: string) => {
+  if (shouldIgnoreUrl(url)) return;
   const item = {
     url,
     created: new Date(),
