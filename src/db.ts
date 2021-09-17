@@ -1,5 +1,9 @@
 import * as idb from "idb/with-async-ittr.js";
-import { DB_NAME, TRACK_INFO_STORE_NAME } from "./constants";
+import {
+  DB_NAME,
+  TRACK_INFO_STORE_NAME,
+  USER_LOG_STORE_NAME,
+} from "./constants";
 import { Configuration, ActTypeKey, TrackInfoRecord, DbHandle } from "./types";
 import React, { useEffect, useState } from "react";
 
@@ -11,6 +15,12 @@ export const openIDB = async () => {
           autoIncrement: true,
         });
         tiDb.createIndex("url", "url", { unique: false });
+        tiDb.createIndex("created", "created", { unique: false });
+      }
+      if (!upgradeDb.objectStoreNames.contains(USER_LOG_STORE_NAME)) {
+        const tiDb = upgradeDb.createObjectStore(USER_LOG_STORE_NAME, {
+          autoIncrement: true,
+        });
         tiDb.createIndex("created", "created", { unique: false });
       }
     },
@@ -34,6 +44,24 @@ export async function clearTrackingStorage<AK extends ActTypeKey>(
 ) {
   await clearStorage(db, TRACK_INFO_STORE_NAME);
 }
+
+export enum UserLogMessageType {
+  Warning,
+  Error,
+  Info,
+}
+export interface UserLogMessage {
+  type: UserLogMessageType;
+  msg: string;
+  created: Date;
+}
+export const saveUserLogMessage = async (
+  db: DbHandle,
+  msg: Omit<UserLogMessage, "created">
+) => {
+  const tx = db.transaction(USER_LOG_STORE_NAME, "readwrite");
+  await tx.store.put({ ...msg, created: new Date() });
+};
 
 export function useIndexedDbHandle(): DbHandle {
   const [handle, setHandle] = React.useState<DbHandle>(null);
@@ -67,14 +95,28 @@ export function useIndexedDbGetAllFromStoreByIndex<T>(
   dbHandle: DbHandle,
   storeName: string,
   index: string
-): T[] | null {
+): [T[] | null, () => Promise<void>] {
   const [data, setData] = React.useState<T[] | null>(null);
-  React.useMemo(() => {
+  const refresh = async () => {
     if (dbHandle === null) return;
-    (async () => {
-      const result = await dbHandle.getAllFromIndex(storeName, index);
-      setData(result);
-    })();
+    const result = await dbHandle.getAllFromIndex(storeName, index);
+    setData(result);
+  };
+  React.useMemo(() => {
+    refresh();
   }, [dbHandle]);
-  return data;
+  return [data, refresh];
 }
+
+export const allUserLogsSorted = (db: DbHandle) => {
+  return useIndexedDbGetAllFromStoreByIndex<UserLogMessage>(
+    db,
+    USER_LOG_STORE_NAME,
+    "created"
+  );
+};
+
+export const clearUserLogs = async (db: DbHandle) => {
+  const tx = db.transaction(USER_LOG_STORE_NAME, "readwrite");
+  await tx.store.clear();
+};

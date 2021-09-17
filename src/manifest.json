@@ -4,6 +4,7 @@
   "version": "1.0",
   "manifest_version": 3,
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
+  "options_page": "./options.html",
   "background": {
     "service_worker": "background.js"
   },

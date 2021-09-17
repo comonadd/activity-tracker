@@ -1,0 +1,34 @@
+.config-page {
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.config-editor {
+  width: 100%;
+  /* height: 100%; */
+  display: flex;
+  flex-direction: column;
+}
+
+.config-editor .edit-area {
+  width: 100%;
+  /* flex: 1 1 100%; */
+}
+
+.config-editor .edit-area .edit-area-root {
+  /* height: 100% !important; */
+}
+
+.config-editor .edit-area textarea {
+  /* height: 100% !important; */
+}
+
+.logs-list {
+  font-size: 14px;
+}
+
+.logs-list .logs__item {
+  margin: 8px 0;
+}

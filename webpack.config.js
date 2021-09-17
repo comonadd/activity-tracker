@@ -10,6 +10,7 @@ module.exports = {
   mode: DEV ? "development" : "production",
   entry: {
       "dashboard": `${SRC}/dashboard.tsx`,
+      "options": `${SRC}/options.tsx`,
       "popup": `${SRC}/popup.ts`,
       "background": `${SRC}/background.ts`,
   },
@@ -28,6 +29,10 @@ module.exports = {
         ],
         use: "ts-loader",
         exclude: /node_modules/,
+      },
+      {
+        test: /\.css$/,
+        use: ["style-loader", "css-loader"],
       },
     ],
   },
@@ -55,6 +60,7 @@ module.exports = {
         { from: `${SRC}/popup.css`, to: BUILD },
         { from: `${SRC}/dashboard.html`, to: BUILD },
         { from: `${SRC}/dashboard.css`, to: BUILD },
+        { from: `${SRC}/options.html`, to: BUILD },
         { from: `${SRC}/manifest.json`, to: BUILD },
       ],
     }),

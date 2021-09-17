@@ -2,6 +2,7 @@ import { ActivityTypesMapping, ActivityMatcher, Configuration } from "./types";
 
 export const DB_NAME = "ti-main-db";
 export const TRACK_INFO_STORE_NAME = "tracking-info";
+export const USER_LOG_STORE_NAME = "user-logs";
 export const ACTIVITY_UNDEFINED = -1;
 // user-defined dictionary describing activity types
 type DAT = "workRelated" | "properEntertainment" | "dumbEntertainment";

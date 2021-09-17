@@ -7,7 +7,12 @@ import {
   DEFAULT_CONFIG,
 } from "./constants";
 import { calculateUrlType } from "./util";
-import { addTrackedItem, openIDB } from "./db";
+import {
+  UserLogMessageType,
+  saveUserLogMessage,
+  addTrackedItem,
+  openIDB,
+} from "./db";
 import { Configuration, DbHandle } from "./types";
 
 interface TrackerState {
@@ -22,10 +27,17 @@ const shouldIgnoreUrl = (url: string) => {
 
 const trackUrl = async (state: TrackerState, url: string) => {
   if (shouldIgnoreUrl(url)) return;
+  const t = calculateUrlType(state.config, url);
+  if (t === null) {
+    saveUserLogMessage(state.dbHandle, {
+      type: UserLogMessageType.Warning,
+      msg: `No activity matcher for url found: "${url}"`,
+    });
+  }
   const item = {
     url,
     created: new Date(),
-    type: calculateUrlType(state.config, url),
+    type: t,
   };
   await addTrackedItem(state.dbHandle, item);
 };

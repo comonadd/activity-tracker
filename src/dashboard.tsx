@@ -18,6 +18,7 @@ import AccordionDetails from "@material-ui/core/AccordionDetails";
 import Typography from "@material-ui/core/Typography";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import TodayIcon from "@material-ui/icons/Today";
+import SettingsIcon from "@material-ui/icons/Settings";
 import ListIcon from "@material-ui/icons/List";
 import {
   calcProductivityLevelForDay,
@@ -42,6 +43,8 @@ import {
   useIndexedDbHandle,
 } from "./db";
 import { createHashHistory, Location } from "history";
+import "./app.css";
+import "./dashboard.css";
 
 const history = createHashHistory();
 
@@ -517,6 +520,15 @@ const Dashboard = () => {
                   title="Toggle view"
                 >
                   {viewingModeIcon}
+                </IconButton>
+              </Grid>
+              <Grid item>
+                <IconButton
+                  onClick={() => history.push("/settings/")}
+                  size="medium"
+                  title="Open settings"
+                >
+                  <SettingsIcon />
                 </IconButton>
               </Grid>
             </Grid>
