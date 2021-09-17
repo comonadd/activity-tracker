@@ -489,19 +489,21 @@ const Dashboard = () => {
           </Typography>
           <div className="dashboard-controls fcv">
             <Grid container spacing={1} className="fcv">
-              <Grid item>
-                <Button
-                  onClick={() =>
-                    populateStorageWithRandomData(config, dbHandle)
-                  }
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  disableElevation
-                >
-                  Populate storage with random data
-                </Button>
-              </Grid>
+              {process.env.NODE_ENV === "development" && (
+                <Grid item>
+                  <Button
+                    onClick={() =>
+                      populateStorageWithRandomData(config, dbHandle)
+                    }
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    disableElevation
+                  >
+                    Populate storage with random data
+                  </Button>
+                </Grid>
+              )}
               <Grid item>
                 <Button
                   onClick={() => clearTrackingStorage(config, dbHandle)}
