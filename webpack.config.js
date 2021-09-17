@@ -39,7 +39,9 @@ module.exports = {
   resolve: {
     modules: ["node_modules",path.resolve(__dirname, "app")],
     extensions: [".js", ".json", ".tsx", ".ts", ".css"],
-    alias: {},
+    alias: {
+      '~': SRC,
+    },
   },
   performance: {
     hints: "warning", // enum

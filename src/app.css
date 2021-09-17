@@ -2,9 +2,52 @@
   outline: none;
 }
 
+:root {
+  --white-color: #ffffff;
+  --danger-color: #ca0b00;
+  --success-color: #016401;
+  --warning-color: #f0d500;
+}
+
 body,
 html,
 #root {
   width: 100%;
   height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.prod-level-bar {
+  background: white;
+  width: 100%;
+  height: 20px;
+  border: 1px solid #eee;
+  background: linear-gradient(75deg, #f7e3ad, var(--success-color));
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.prod-level-bar__part {
+  height: 100%;
+  background: var(--white-color);
+}
+
+.fs-12 {
+  font-size: 12px;
+}
+
+.day-log {
+  height: 100%;
+  flex: 1 1 100%;
+}
+
+.app,
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
 }

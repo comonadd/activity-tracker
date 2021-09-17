@@ -26,9 +26,11 @@ export const DEFAULT_ACTIVITY_MATCHER: ActivityMatcher<DAT> = {
   "twitch.tv": "dumbEntertainment",
   "youtube.com": "dumbEntertainment",
 };
-export const DEFAULT_CONFIG: Configuration<keyof typeof DEFAULT_ACTIVITY_TYPES> = {
-  // mapping from activity id to activity info
+export const DEFAULT_CONFIG: Configuration<
+  keyof typeof DEFAULT_ACTIVITY_TYPES
+> = {
   activityTypes: DEFAULT_ACTIVITY_TYPES,
-  // mapping from regexp to activity id
   matcher: DEFAULT_ACTIVITY_MATCHER,
+  prodLowerBound: 0,
+  prodUpperBound: 1000,
 };

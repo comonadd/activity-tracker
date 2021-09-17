@@ -141,9 +141,16 @@ export const calcProductivityLevelForDay = (
   return prod;
 };
 
+export enum LStatus {
+  Loading = 0,
+  Loaded = 1,
+  Errored = 2,
+}
+
 // TODO: Implement automatic sync
-export function useExtStorage<T>(key: string): [T, (v: T) => void] {
+export function useExtStorage<T>(key: string): [T, (v: T) => void, LStatus] {
   const [data, setData] = useState<T | null>(null);
+  const [status, setStatus] = useState<LStatus>(LStatus.Loading);
   useEffect(() => {
     extAPI.storage.sync.get(key, (storageData: any) => {
       if (storageData) {
@@ -151,6 +158,7 @@ export function useExtStorage<T>(key: string): [T, (v: T) => void] {
       } else {
         setData(null);
       }
+      setStatus(LStatus.Loaded);
     });
   }, [key]);
   const setNewValue = (newValue: T) => {
@@ -158,5 +166,35 @@ export function useExtStorage<T>(key: string): [T, (v: T) => void] {
     extAPI.storage.sync.set({ [key]: newValue });
     setData(newValue);
   };
-  return [data, setNewValue];
+  return [data, setNewValue, status];
 }
+
+export const dateFormatHMS = (d: Date) =>
+  d.toLocaleString(navigator.language, {
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  } as any);
+
+export const unixDuration = (n: number) => {
+  let seconds = n / 1000;
+  let minutes = Math.round(seconds / 60);
+  seconds = Math.round(seconds % 60);
+  const hours = Math.round(minutes / 60);
+  minutes = Math.round(minutes % 60);
+  return `${hours} HRS, ${minutes} MINUTES`;
+};
+
+export const dateToString = (date: Date) =>
+  date.toLocaleString(navigator.language, {
+    hourCycle: "h23",
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric",
+  } as any);
+
+export const getProdPerc = (config: Configuration<any>, prod: number) => {
+  return (prod / config.prodUpperBound) * 100;
+};
