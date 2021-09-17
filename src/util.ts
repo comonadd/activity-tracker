@@ -14,6 +14,7 @@ import {
 } from "./types";
 import { addTrackedItem } from "./db";
 import React, { useEffect, useState } from "react";
+import extAPI from "./extAPI";
 
 const URL_SELECTION = [
   "https://news.ycombinator.com",
@@ -141,10 +142,10 @@ export const calcProductivityLevelForDay = (
 };
 
 // TODO: Implement automatic sync
-export function useChromeStorage<T>(key: string): [T, (v: T) => void] {
+export function useExtStorage<T>(key: string): [T, (v: T) => void] {
   const [data, setData] = useState<T | null>(null);
   useEffect(() => {
-    chrome.storage.sync.get(key, (storageData: any) => {
+    extAPI.storage.sync.get(key, (storageData: any) => {
       if (storageData) {
         setData(storageData[key] as any as T);
       } else {
@@ -153,7 +154,8 @@ export function useChromeStorage<T>(key: string): [T, (v: T) => void] {
     });
   }, [key]);
   const setNewValue = (newValue: T) => {
-    chrome.storage.sync.set({ [key]: newValue });
+    console.log("setting new value", key, newValue);
+    extAPI.storage.sync.set({ [key]: newValue });
     setData(newValue);
   };
   return [data, setNewValue];

@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import {
   calcProductivityLevelForDay,
   rewardForActivityType,
-  useChromeStorage,
+  useExtStorage,
 } from "./util";
 import { Configuration } from "./types";
 import Button from "@material-ui/core/Button";
@@ -18,7 +18,7 @@ import FormHelperText from "@material-ui/core/FormHelperText";
 
 const OptionsPage = () => {
   const [config, setConfig] =
-    useChromeStorage<Configuration<any>>("tracker-config");
+    useExtStorage<Configuration<any>>("tracker-config");
   console.log(config);
   const [configS, setConfigS] = useState<string>("");
   useEffect(() => {

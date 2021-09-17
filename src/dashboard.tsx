@@ -24,7 +24,7 @@ import {
   calcProductivityLevelForDay,
   rewardForActivityType,
   populateStorageWithRandomData,
-  useChromeStorage,
+  useExtStorage,
 } from "./util";
 import {
   DB_NAME,
@@ -346,7 +346,7 @@ const viewingModesAvailable = Object.keys(Mode).length / 2;
 const Dashboard = () => {
   const { config, setConfig } = useContext(AppContext);
   const dbHandle = useIndexedDbHandle();
-  const trackedRecords = useIndexedDbGetAllFromStoreByIndex<TrackInfoRecord>(
+  const [trackedRecords, _] = useIndexedDbGetAllFromStoreByIndex<TrackInfoRecord>(
     dbHandle,
     TRACK_INFO_STORE_NAME,
     "created"
@@ -362,11 +362,6 @@ const Dashboard = () => {
     }, new Map() as TrackedRecordsGrouped);
   }, [trackedRecords]);
   // maybe sort by date before showing
-  React.useEffect(() => {
-    if (config === null) {
-      setConfig(DEFAULT_CONFIG);
-    }
-  }, []);
   const allDayDates = Array.from(trackedRecordsGrouped.keys()).sort(
     (a: number, b: number) => {
       return a - b;
@@ -399,6 +394,10 @@ const Dashboard = () => {
   };
 
   const historyRendered = useMemo(() => {
+    if (config === null) {
+        console.error("Configuration is null");
+        return null;
+    }
     switch (viewingMode) {
       case Mode.List:
         {
@@ -607,7 +606,12 @@ const App = () => {
   const location = useLocation();
   const [currRouteParams, setCurrRouteParams] = React.useState<RouteParams>({});
   const [config, setConfig] =
-    useChromeStorage<Configuration<any>>("tracker-config");
+    useExtStorage<Configuration<any>>("tracker-config");
+  React.useEffect(() => {
+    if (config === null) {
+      setConfig(DEFAULT_CONFIG);
+    }
+  }, []);
   const componentToRender = matchLocation(routeMatcher, location);
   return (
     <RouterContext.Provider value={{ params: currRouteParams }}>

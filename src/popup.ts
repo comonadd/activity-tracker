@@ -1,7 +1,7 @@
-"use strict";
+import extAPI from "./extAPI";
 
 const openDashboard = () => {
-  chrome.tabs.create({ 'url': chrome.runtime.getURL('./dashboard.html') });
+  extAPI.tabs.create({ url: extAPI.runtime.getURL("./dashboard.html") });
 };
 
 document.getElementById("open-dashboard").onclick = () => {

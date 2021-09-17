@@ -14,13 +14,14 @@ import {
   openIDB,
 } from "./db";
 import { Configuration, DbHandle } from "./types";
+import extAPI from "./extAPI";
 
 interface TrackerState {
   config: Configuration<any>;
   dbHandle: DbHandle;
 }
 
-const urlIgnoreRegexp = /chrome:\/\/.*/;
+const urlIgnoreRegexp = /(chrome:\/\/.*|moz-extension:\/\/.*|about:.*)/;
 const shouldIgnoreUrl = (url: string) => {
   return urlIgnoreRegexp.test(url);
 };
@@ -47,7 +48,7 @@ const setup = async () => {
     config: DEFAULT_CONFIG,
     dbHandle: await openIDB(),
   };
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  extAPI.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.url) {
       trackUrl(state, changeInfo.url);
     }

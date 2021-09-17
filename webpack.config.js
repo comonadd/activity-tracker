@@ -16,7 +16,7 @@ module.exports = {
   },
   output: {
     path: BUILD,
-    filename: "[name].js", // string (default)
+    filename: "[name].min.js", // string (default)
     publicPath: "/assets/", // string
     uniqueName: "activity-tracker-chrome",
   },
