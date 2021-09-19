@@ -40,7 +40,7 @@ const trackUrl = async (state: TrackerState, url: string) => {
     created: new Date(),
     type: t,
   };
-  await addTrackedItem(state.dbHandle, item);
+  await addTrackedItem(item);
 };
 
 const setup = async () => {

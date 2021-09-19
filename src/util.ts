@@ -101,14 +101,13 @@ const randomDateBetween = (start: Date, end: Date): Date => {
 };
 
 export async function populateStorageWithRandomData<AK extends ActTypeKey>(
-  config: Configuration<AK>,
-  db: DbHandle
+  config: Configuration<AK>
 ) {
   const startDate = randomDateBetween(new Date(2000, 0, 0), new Date());
   const randomRecords = generateRandomRecords(config, 30, 15, startDate);
   for (let i = 0; i < randomRecords.length; ++i) {
     const item = randomRecords[i];
-    addTrackedItem(db, item);
+    addTrackedItem(item);
   }
 }
 

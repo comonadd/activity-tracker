@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import Page from "~/components/Page";
 import { Link } from "~/routeManager";
-import { useIndexedDbHandle } from "~/db";
+import { allRecordsForDay, useIndexedDbHandle } from "~/db";
 import {
   DbHandle,
   Configuration,
@@ -33,28 +33,6 @@ interface DayPageProps {
   month: string;
   day: string;
 }
-
-const allRecordsForDay = async (
-  db: DbHandle,
-  dayDate: Date
-): Promise<TrackInfoRecord[]> => {
-  const tx = db.transaction(TRACK_INFO_STORE_NAME, "readonly");
-  const store = tx.objectStore(TRACK_INFO_STORE_NAME);
-  const index = store.index("created");
-  const fromDate = dayDate;
-  const toDate = new Date(
-    fromDate.getFullYear(),
-    fromDate.getMonth(),
-    fromDate.getDate() + 1
-  );
-  const range = IDBKeyRange.bound(fromDate, toDate);
-  const res = [];
-  for await (const cursor of index.iterate(range)) {
-    const r = { ...cursor.value };
-    res.push(r);
-  }
-  return res;
-};
 
 const ProductivityLevel = (props: {
   config: Configuration<any>;

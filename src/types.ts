@@ -1,3 +1,6 @@
+import * as idb from "idb/with-async-ittr.js";
+import { IDBPDatabase } from "idb";
+
 export interface ActivityDesc {
   description: string;
   reward: number;
@@ -23,7 +26,7 @@ export interface TrackInfoRecord {
   created: Date;
   type: ActivityType;
 }
-export type DbHandle = any | null;
+export type DbHandle = IDBPDatabase<any>;
 
 export interface PageInfo {
   url: string;

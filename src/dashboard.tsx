@@ -38,6 +38,7 @@ import {
   useIndexedDbGetAllFromStore,
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
+  useTrackedItemsPaginatedByDay,
 } from "./db";
 import "./app.css";
 import "./dashboard.css";
@@ -168,13 +169,11 @@ const viewingModesAvailable = Object.keys(Mode).length / 2;
 
 const Dashboard = () => {
   const { config, setConfig } = useContext(AppContext);
-  const dbHandle = useIndexedDbHandle();
-  const [trackedRecords, _] =
-    useIndexedDbGetAllFromStoreByIndex<TrackInfoRecord>(
-      dbHandle,
-      TRACK_INFO_STORE_NAME,
-      "created"
-    );
+  const trackedRecordsP = useTrackedItemsPaginatedByDay({
+    reversed: true,
+    perPage: 10,
+  });
+  const trackedRecords = trackedRecordsP.data;
   const trackedRecordsGrouped: TrackedRecordsGrouped = React.useMemo(() => {
     if (!trackedRecords || trackedRecords.length === 0) return new Map();
     return trackedRecords.reduce((acc: TrackedRecordsGrouped, rec) => {
@@ -290,6 +289,7 @@ const Dashboard = () => {
                   </Paper>
                 );
               })}
+              <Button onClick={trackedRecordsP.nextPage}>Next page</Button>
             </div>
           );
         }
@@ -315,9 +315,7 @@ const Dashboard = () => {
               {process.env.NODE_ENV === "development" && (
                 <Grid item>
                   <Button
-                    onClick={() =>
-                      populateStorageWithRandomData(config, dbHandle)
-                    }
+                    onClick={() => populateStorageWithRandomData(config)}
                     variant="contained"
                     color="primary"
                     size="large"
@@ -329,7 +327,7 @@ const Dashboard = () => {
               )}
               <Grid item>
                 <Button
-                  onClick={() => clearTrackingStorage(config, dbHandle)}
+                  onClick={() => clearTrackingStorage(config)}
                   variant="contained"
                   size="large"
                   color="primary"
