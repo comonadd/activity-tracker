@@ -80,11 +80,7 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
       return acc;
     }, new Map() as TrackedRecordsGrouped);
   }, [trackedRecords]);
-  const allDayDates = Array.from(trackedRecordsGrouped.keys()).sort(
-    (a: number, b: number) => {
-      return a - b;
-    }
-  );
+  const allDayDates = Array.from(trackedRecordsGrouped.keys());
   const renderedCalendar = React.useMemo(() => {
     return allDayDates.map((d) => {
       const records = trackedRecordsGrouped.get(d);

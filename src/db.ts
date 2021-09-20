@@ -177,7 +177,6 @@ async function* recordsPaginated(
     yield c.value;
   }
   const nextCursor = res[res.length - 1].created;
-  console.log(res);
   return [res, nextCursor];
 }
 
@@ -187,8 +186,12 @@ interface PaginatedController<T> {
   nextPage: () => void;
 }
 
-const fetchData = async (startingDate: Date, perPage: number) => {
-  const res: Map<any, any> = await TrackedRecord.query()
+const fetchData = async (
+  startingDate: Date,
+  perPage: number,
+  reversed: boolean = false
+) => {
+  let qry = TrackedRecord.query()
     .byIndex("created")
     .from(startingDate)
     .groupBy((item) => {
@@ -198,8 +201,11 @@ const fetchData = async (startingDate: Date, perPage: number) => {
         item.created.getDate()
       ).getTime();
     })
-    .take(perPage)
-    .all();
+    .take(perPage);
+  if (reversed) {
+    qry = qry.desc();
+  }
+  const res: Map<any, any> = await qry.all();
   const resFlattened = Array.from(res.entries()).reduce((acc, ti) => {
     for (const item of ti[1]) {
       acc.push(item);
@@ -216,13 +222,13 @@ export function useTrackedItemsPaginatedByDay(
     startingDate?: Date;
   } = {}
 ): PaginatedController<TrackInfoRecord[]> {
-  const startingDate = options?.startingDate ?? new Date(0);
+  const startingDate = options?.startingDate ?? new Date();
+  const reversed = options?.reversed ?? false;
   const perPage = options?.perPage ?? 10;
   const [data, setData] = useState<TrackInfoRecord[]>([]);
   const fetchDataAndSaveCursor = React.useCallback(async () => {
     const c = data.length !== 0 ? data[data.length - 1].created : startingDate;
-    const newData = await fetchData(c, perPage);
-    const lastItem = newData[newData.length - 1];
+    const newData = await fetchData(c, perPage, reversed);
     setData(newData);
   }, [data]);
   useEffect(() => {
