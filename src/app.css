@@ -51,6 +51,40 @@ html,
   box-sizing: border-box;
 }
 
+.pv-2 {
+  padding: 8px 0;
+}
+
+.pv-8 {
+  padding: 16px 0;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
 .page {
   padding: 16px;
+}
+
+.df {
+  display: flex;
+}
+
+.fsb {
+  justify-content: space-between;
+}
+
+.f-100 {
+  flex: 1 1 100%;
+}
+
+.fcv {
+  align-items: center;
+}
+
+.editor {
+}
+
+.editor textarea.editor-textarea {
 }

@@ -29,10 +29,12 @@ const shouldIgnoreUrl = (url: string) => {
 const trackUrl = async (state: TrackerState, url: string) => {
   if (shouldIgnoreUrl(url)) return;
   const t = calculateUrlType(state.config, url);
+  const uu = new URL(url);
+  url = uu.origin + uu.pathname;
   if (t === null) {
     saveUserLogMessage(state.dbHandle, {
       type: UserLogMessageType.Warning,
-      msg: `No activity matcher for url found: "${url}"`,
+      msg: `No activity matcher for path found: "${url}"`,
     });
   }
   const item = {

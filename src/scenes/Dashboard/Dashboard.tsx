@@ -78,6 +78,7 @@ import {
 import HistoryCalendar from "./HistoryCalendar";
 import DashboardContext from "./DashboardContext";
 import FullHistoryList from "./FullHistoryList";
+import paths from "~/paths";
 
 enum Mode {
   Calendar = 0,
@@ -174,7 +175,9 @@ const Dashboard = () => {
                 </Grid>
                 <Grid item>
                   <IconButton
-                    onClick={() => history.push("/settings/")}
+                    onClick={() => {
+                      location.assign(paths.OPTIONS_PAGE);
+                    }}
                     size="medium"
                     title="Open settings"
                   >

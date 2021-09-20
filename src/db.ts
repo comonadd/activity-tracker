@@ -36,9 +36,15 @@ export const openIDB = async () => {
 const db = openIDB();
 
 // Single record = one visit to a particular URL
-const TrackedRecord = createIDBEntity<TrackInfoRecord, "created">(
+export const TrackedRecord = createIDBEntity<TrackInfoRecord, "created">(
   db,
   TRACK_INFO_STORE_NAME,
+  "created"
+);
+
+export const UserLog = createIDBEntity<UserLogMessage, "created">(
+  db,
+  USER_LOG_STORE_NAME,
   "created"
 );
 
@@ -227,14 +233,6 @@ export function useTrackedItemsPaginatedByDay(
   }, [fetchDataAndSaveCursor]);
   return { data, nextPage, refresh: () => {} };
 }
-
-export const allUserLogsSorted = (db: DbHandle) => {
-  return useIndexedDbGetAllFromStoreByIndex<UserLogMessage>(
-    db,
-    USER_LOG_STORE_NAME,
-    "created"
-  );
-};
 
 export const clearUserLogs = async (db: DbHandle) => {
   const tx = db.transaction(USER_LOG_STORE_NAME, "readwrite");

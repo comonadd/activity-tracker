@@ -51,14 +51,6 @@
 .header {
 }
 
-.df { display: flex; }
-
-.fsb { justify-content: space-between; }
-
-.f-100 { flex: 1 1 100%; }
-
-.fcv { align-items: center; }
-
 .full-history-calendar {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
