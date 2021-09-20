@@ -11,7 +11,7 @@ import {
 } from "./constants";
 import { Configuration, ActTypeKey, TrackInfoRecord, DbHandle } from "./types";
 import React, { useEffect, useState } from "react";
-import { createDbEntity } from "idb-orm";
+import { createIDBEntity } from "idb-orm";
 
 export const openIDB = async () => {
   return await idb.openDB(DB_NAME, 1, {
@@ -200,7 +200,7 @@ const dateAdd = (date: Date, what: DateDelta) => {
 
 const db = openIDB();
 
-const TrackedRecord = createDbEntity<TrackInfoRecord, "created">(
+const TrackedRecord = createIDBEntity<TrackInfoRecord, "created">(
   db,
   TRACK_INFO_STORE_NAME,
   "created"
