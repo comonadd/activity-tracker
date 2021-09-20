@@ -33,4 +33,6 @@ export const DEFAULT_CONFIG: Configuration<
   matcher: DEFAULT_ACTIVITY_MATCHER,
   prodLowerBound: 0,
   prodUpperBound: 1000,
+  urlIgnorePattern:
+    "(chrome://.*|chrome-extension:.*|moz-extension://.*|about:.*)",
 };

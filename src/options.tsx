@@ -38,6 +38,7 @@ const OptionsPage = () => {
       if (c) {
         setConfig(c);
       }
+      setError(null);
     } catch (err) {
       setError(err);
     }

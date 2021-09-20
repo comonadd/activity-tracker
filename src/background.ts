@@ -21,12 +21,17 @@ interface TrackerState {
   dbHandle: DbHandle;
 }
 
-const urlIgnoreRegexp = /(chrome:\/\/.*|moz-extension:\/\/.*|about:.*)/;
-const shouldIgnoreUrl = (url: string) => {
-  return urlIgnoreRegexp.test(url);
+let state: TrackerState = {
+  config: null,
+  dbHandle: null,
 };
 
-const trackUrl = async (state: TrackerState, url: string) => {
+const shouldIgnoreUrl = (url: string) => {
+  const rxp = new RegExp(state.config.urlIgnorePattern);
+  return rxp.test(url);
+};
+
+const trackUrl = async (url: string) => {
   if (shouldIgnoreUrl(url)) return;
   const t = calculateUrlType(state.config, url);
   const uu = new URL(url);
@@ -45,16 +50,41 @@ const trackUrl = async (state: TrackerState, url: string) => {
   await addTrackedItem(item);
 };
 
-const setup = async () => {
-  const state: TrackerState = {
-    config: DEFAULT_CONFIG,
-    dbHandle: await openIDB(),
-  };
-  extAPI.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.url) {
-      trackUrl(state, changeInfo.url);
+const subcribeToExtStorageChangesOf = <T>(
+  key: string,
+  listener: (c: T) => void
+) => {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    const newValue = (changes[key] as any).newValue;
+    if (area === "sync" && newValue) {
+      listener(newValue);
     }
   });
+};
+
+const tabListener = (tabId: number, changeInfo: { url: string }, tab: any) => {
+  if (changeInfo.url) {
+    trackUrl(changeInfo.url);
+  }
+};
+
+const setup = async () => {
+  extAPI.storage.sync.get("tracker-config", (storageData) => {
+    let config = storageData["tracker-config"];
+    if (!config) {
+      extAPI.storage.sync.set({ "tracker-config": DEFAULT_CONFIG });
+      config = DEFAULT_CONFIG;
+    }
+    state.config = config;
+  });
+  state.dbHandle = await openIDB();
+  subcribeToExtStorageChangesOf<Configuration<any>>(
+    "tracker-config",
+    (config) => {
+      state.config = config;
+    }
+  );
+  extAPI.tabs.onUpdated.addListener(tabListener);
 };
 
 setup();

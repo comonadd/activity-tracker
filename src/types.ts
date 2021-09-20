@@ -19,6 +19,8 @@ export type Configuration<AK extends ActTypeKey> = {
   // bounds
   prodLowerBound: number;
   prodUpperBound: number;
+  // urls to ignore completely
+  urlIgnorePattern: string;
 };
 export type ActivityType = string | null;
 export interface TrackInfoRecord {
