@@ -71,6 +71,9 @@ import {
   Paper,
   Grid,
   Breadcrumbs,
+  Menu,
+  MenuItem,
+  MenuIcon,
 } from "~/theme";
 import HistoryCalendar from "./HistoryCalendar";
 import DashboardContext from "./DashboardContext";
@@ -141,6 +144,15 @@ const Dashboard = () => {
     }
   }, [config, viewingMode]);
 
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: any) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <DashboardContext.Provider value={{}}>
       <Page title="Activity Dashboard">
@@ -151,30 +163,6 @@ const Dashboard = () => {
             </Typography>
             <div className="dashboard-controls fcv">
               <Grid container spacing={1} className="fcv">
-                {process.env.NODE_ENV === "development" && (
-                  <Grid item>
-                    <Button
-                      onClick={() => populateStorageWithRandomData(config)}
-                      variant="contained"
-                      color="primary"
-                      size="large"
-                      disableElevation
-                    >
-                      Populate storage with random data
-                    </Button>
-                  </Grid>
-                )}
-                <Grid item>
-                  <Button
-                    onClick={() => clearTrackingStorage(config)}
-                    variant="contained"
-                    size="large"
-                    color="primary"
-                    disableElevation
-                  >
-                    Clear storage
-                  </Button>
-                </Grid>
                 <Grid item>
                   <IconButton
                     onClick={() => toggleViewingMode()}
@@ -192,6 +180,37 @@ const Dashboard = () => {
                   >
                     <SettingsIcon />
                   </IconButton>
+                </Grid>
+                <Grid item>
+                  <IconButton
+                    id="dashboard-menu-button"
+                    aria-controls="dashboard-menu"
+                    aria-haspopup="true"
+                    aria-expanded={open ? "true" : undefined}
+                    onClick={handleClick}
+                  >
+                    <MenuIcon />
+                  </IconButton>
+                  <Menu
+                    id="dashbboard-menu"
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                    MenuListProps={{
+                      "aria-labelledby": "dashboard-menu-button",
+                    }}
+                  >
+                    {process.env.NODE_ENV === "development" && (
+                      <MenuItem
+                        onClick={() => populateStorageWithRandomData(config)}
+                      >
+                        Populate storage with random data
+                      </MenuItem>
+                    )}
+                    <MenuItem onClick={() => clearTrackingStorage(config)}>
+                      Clear storage
+                    </MenuItem>
+                  </Menu>
                 </Grid>
               </Grid>
             </div>

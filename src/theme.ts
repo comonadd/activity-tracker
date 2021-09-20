@@ -12,3 +12,6 @@ export { default as ExpandMoreIcon } from "@material-ui/icons/ExpandMore";
 export { default as TodayIcon } from "@material-ui/icons/Today";
 export { default as SettingsIcon } from "@material-ui/icons/Settings";
 export { default as ListIcon } from "@material-ui/icons/List";
+export { default as Menu } from "@material-ui/core/Menu";
+export { default as MenuItem } from "@material-ui/core/MenuItem";
+export { default as MenuIcon } from "@material-ui/icons/Menu";

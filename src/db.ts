@@ -33,6 +33,15 @@ export const openIDB = async () => {
   });
 };
 
+const db = openIDB();
+
+// Single record = one visit to a particular URL
+const TrackedRecord = createIDBEntity<TrackInfoRecord, "created">(
+  db,
+  TRACK_INFO_STORE_NAME,
+  "created"
+);
+
 export const addTrackedItem = async (item: TrackInfoRecord) => {
   await TrackedRecord.create(item);
 };
@@ -118,16 +127,11 @@ const getRecordsInRange = async (
   fromDate: Date,
   toDate: Date
 ): Promise<TrackInfoRecord[]> => {
-  const tx = db.transaction(TRACK_INFO_STORE_NAME, "readonly");
-  const store = tx.objectStore(TRACK_INFO_STORE_NAME);
-  const index = store.index("created");
-  const range = IDBKeyRange.bound(fromDate, toDate);
-  const res = [];
-  for await (const cursor of index.iterate(range)) {
-    const r = { ...cursor.value };
-    res.push(r);
-  }
-  return res;
+  return TrackedRecord.query()
+    .byIndex("created")
+    .from(fromDate)
+    .to(toDate)
+    .all();
 };
 
 export const allRecordsForDay = async (
@@ -142,18 +146,6 @@ export const allRecordsForDay = async (
   );
   return getRecordsInRange(db, fromDate, toDate);
 };
-
-// interface Stream {}
-// const genToStream = (gen: Generator<any>): Stream => {
-//
-// };
-// const streamNext
-// const item = take(s);
-// const item = take(s);
-// const item = take(s);
-// const afterMonth = startingDate + month;
-// const items = takeUntil(s, (item) => item.created >= afterMonth);
-//
 
 type CT = Date;
 async function* recordsPaginated(
@@ -188,23 +180,6 @@ interface PaginatedController<T> {
   refresh: () => void;
   nextPage: () => void;
 }
-
-type Milliseconds = number;
-type DateDelta = Milliseconds;
-const dateDays = (days: number): DateDelta => {
-  return days * 24 * 60 * 60 * 1000;
-};
-const dateAdd = (date: Date, what: DateDelta) => {
-  return new Date(date.getTime() + what);
-};
-
-const db = openIDB();
-
-const TrackedRecord = createIDBEntity<TrackInfoRecord, "created">(
-  db,
-  TRACK_INFO_STORE_NAME,
-  "created"
-);
 
 const fetchData = async (startingDate: Date, perPage: number) => {
   const res: Map<any, any> = await TrackedRecord.query()

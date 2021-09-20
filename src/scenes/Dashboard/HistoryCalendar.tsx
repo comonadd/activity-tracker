@@ -67,7 +67,7 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
   const { config } = React.useContext(AppContext);
   const trackedRecordsP = useTrackedItemsPaginatedByDay({
     reversed: true,
-    perPage: 10,
+    perPage: 30,
   });
   const trackedRecords = trackedRecordsP.data;
   const trackedRecordsGrouped: TrackedRecordsGrouped = React.useMemo(() => {
@@ -85,39 +85,42 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
       return a - b;
     }
   );
+  const renderedCalendar = React.useMemo(() => {
+    return allDayDates.map((d) => {
+      const records = trackedRecordsGrouped.get(d);
+      const dayDate = new Date(d);
+      const year = dayDate.getFullYear();
+      const month = dayDate.getMonth() + 1;
+      const day = dayDate.getDate();
+      // shrink productivity level into a color between lowColorBound and highColorBound
+      let productivityLevel = calcProductivityLevelForDay(config, records);
+      productivityLevel = Math.min(
+        Math.max(productivityLevel, lowProbBound),
+        highProbBound
+      );
+      const pK = rangeK * productivityLevel;
+      const pPerc = pK / 255;
+      const r = lowColor[0] + ck[0] * pPerc;
+      const g = lowColor[1] + ck[1] * pPerc;
+      const b = lowColor[2] + ck[2] * pPerc;
+      const backgroundColor = `rgb(${r}, ${g}, ${b})`;
+      return (
+        <Paper
+          elevation={1}
+          key={dayDate.getTime()}
+          className="calendar-item"
+          onClick={() => history.push(`/${year}/${month}/${day}`)}
+          style={{ backgroundColor }}
+          title={`Productivity: ${productivityLevel}`}
+        >
+          <Typography variant="subtitle2">{dateToString(dayDate)}</Typography>
+        </Paper>
+      );
+    });
+  }, [trackedRecordsGrouped, allDayDates]);
   return (
     <div className="full-history-calendar">
-      {allDayDates.map((d) => {
-        const records = trackedRecordsGrouped.get(d);
-        const dayDate = new Date(d);
-        const year = dayDate.getFullYear();
-        const month = dayDate.getMonth() + 1;
-        const day = dayDate.getDate();
-        // shrink productivity level into a color between lowColorBound and highColorBound
-        let productivityLevel = calcProductivityLevelForDay(config, records);
-        productivityLevel = Math.min(
-          Math.max(productivityLevel, lowProbBound),
-          highProbBound
-        );
-        const pK = rangeK * productivityLevel;
-        const pPerc = pK / 255;
-        const r = lowColor[0] + ck[0] * pPerc;
-        const g = lowColor[1] + ck[1] * pPerc;
-        const b = lowColor[2] + ck[2] * pPerc;
-        const backgroundColor = `rgb(${r}, ${g}, ${b})`;
-        return (
-          <Paper
-            elevation={1}
-            key={dayDate.getTime()}
-            className="calendar-item"
-            onClick={() => history.push(`/${year}/${month}/${day}`)}
-            style={{ backgroundColor }}
-            title={`Productivity: ${productivityLevel}`}
-          >
-            <Typography variant="subtitle2">{dateToString(dayDate)}</Typography>
-          </Paper>
-        );
-      })}
+      {renderedCalendar}
       <Button onClick={trackedRecordsP.nextPage}>Next page</Button>
     </div>
   );
