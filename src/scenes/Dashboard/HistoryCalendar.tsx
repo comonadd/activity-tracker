@@ -9,6 +9,7 @@ import {
   LStatus,
   monthName,
   monthAndYear,
+  DefaultMap,
 } from "~/util";
 import {
   IconButton,
@@ -56,53 +57,12 @@ import {
   TrackedRecordsGrouped,
   DayRecord,
 } from "~/types";
+import Sentry from "~/components/ScrollSentry";
 
 interface HistoryCalendarProps {}
 
-const Sentry = React.forwardRef(
-  (props: { whenInView: () => void }, containerRef: any) => {
-    const ref = React.useRef(null);
-    React.useLayoutEffect(() => {
-      if (!ref.current) {
-        console.error("Couldn't get ref");
-        return;
-      }
-      let options = {
-        root: null,
-        rootMargin: "0px",
-        threshold: 0.5,
-      } as any;
-      let observer = new IntersectionObserver((a) => {
-        const e: any = a[0];
-        if (e.isIntersecting) {
-          props.whenInView();
-        }
-      }, options);
-      observer.observe(ref.current!);
-      return () => {
-        observer.unobserve(ref.current!);
-      };
-    }, [props.whenInView]);
-    return <div style={{ height: 10 }} className="SENTRY" ref={ref}></div>;
-  }
-);
-
-class DefaultMap<K, V> extends Map<K, V> {
-  default_constructor: () => V;
-  constructor(default_constructor: () => V, ...args: any[]) {
-    super(...args);
-    this.default_constructor = default_constructor;
-  }
-  get(key: K): V {
-    if (this.has(key)) return super.get(key);
-    const v = this.default_constructor();
-    this.set(key, v);
-    return v;
-  }
-}
-
 // TODO: Move this to configuration
-const lowColor = [20, 20, 20];
+const lowColor = [250, 250, 250];
 const highColor = [0, 255, 0];
 const highColorBound = 255;
 const highProbBound = 1000;
@@ -163,7 +123,7 @@ const MonthGroup = (props: {
   });
   return (
     <div className="cal-month-group" key={props.monthDate}>
-      <div className="pv-8 df fcv w-100">
+      <div className="pv-10 df fcv w-100">
         <Typography
           variant="subtitle2"
           component="p"

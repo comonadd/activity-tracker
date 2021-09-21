@@ -196,7 +196,7 @@ const Dashboard = () => {
         <div className="dashboard">
           <header className="header df fsb">
             <Typography component="h1" variant="h3">
-              Dashboard
+              My Activity
             </Typography>
             <div className="dashboard-controls fcv">
               <Grid container spacing={1} className="fcv">
