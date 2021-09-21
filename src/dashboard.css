@@ -52,27 +52,38 @@
 }
 
 .full-history-calendar-items {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cal-month-group__title {
+}
+
+.cal-month-group {
+}
+
+.cal-month-group-items {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   grid-gap: 16px;
-  min-height: 100vh;
 }
 
 @media screen and (max-width: 1000px) {
-  .full-history-calendar-items {
+  .cal-month-group-items {
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     grid-gap: 8px;
   }
 }
 
 @media screen and (max-width: 600px) {
-  .full-history-calendar-items {
+  .cal-month-group-items {
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
 
 @media screen and (max-width: 460px) {
-  .full-history-calendar-items {
+  .cal-month-group-items {
     grid-template-columns: 1fr 1fr;
   }
 }

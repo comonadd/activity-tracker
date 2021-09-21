@@ -190,6 +190,17 @@ export const dateToString = (date: Date) =>
     day: "numeric",
   } as any);
 
+export const monthName = (date: Date) =>
+  date.toLocaleString(navigator.language, {
+    month: "long",
+  } as any);
+
+export const monthAndYear = (date: Date) =>
+  date.toLocaleString(navigator.language, {
+    year: "numeric",
+    month: "long",
+  } as any);
+
 export const getProdPerc = (config: Configuration<any>, prod: number) => {
   return (prod / config.prodUpperBound) * 100;
 };

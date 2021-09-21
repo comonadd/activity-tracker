@@ -88,3 +88,7 @@ html,
 
 .editor textarea.editor-textarea {
 }
+
+.w-100 {
+  width: 100%;
+}
