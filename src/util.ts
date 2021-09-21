@@ -117,10 +117,6 @@ export function rewardForActivityType<AK extends ActTypeKey>(
 ): number {
   const ati = (config.activityTypes as any)[at];
   if (ati === undefined) {
-    // TODO: Report to the user
-    console.info(
-      `Couldn't get activity type information from configuration for "${at}"`
-    );
     return 0;
   }
   return ati.reward;
@@ -196,4 +192,13 @@ export const dateToString = (date: Date) =>
 
 export const getProdPerc = (config: Configuration<any>, prod: number) => {
   return (prod / config.prodUpperBound) * 100;
+};
+
+export const downloadBlob = (blob: Blob, fileName: string) => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.setAttribute("download", fileName);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };

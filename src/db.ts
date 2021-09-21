@@ -244,3 +244,33 @@ export const clearUserLogs = async (db: DbHandle) => {
   const tx = db.transaction(USER_LOG_STORE_NAME, "readwrite");
   await tx.store.clear();
 };
+
+export interface ExportImportData {
+  records: TrackInfoRecord[];
+  logs: UserLogMessage[];
+}
+export const constructExportData = async (): Promise<ExportImportData> => {
+  const data = {
+    records: await TrackedRecord.query().all(),
+    logs: await UserLog.query().all(),
+  };
+  return data;
+};
+
+export const importActivity = async (
+  data: ExportImportData
+): Promise<boolean> => {
+  const existingRecordIds = new Set();
+  for (const record of await TrackedRecord.query().all()) {
+    existingRecordIds.add(record.created);
+  }
+  // TODO: Shouldn't the logs also be imported?
+  for (const record of data.records) {
+    if (existingRecordIds.has(record.created)) {
+      console.info(record.created, "already exists, skipping");
+      continue;
+    }
+    await TrackedRecord.create(record);
+  }
+  return true;
+};

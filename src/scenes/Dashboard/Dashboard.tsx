@@ -15,6 +15,7 @@ import {
   unixDuration,
   dateToString,
   LStatus,
+  downloadBlob,
 } from "~/util";
 import {
   DB_NAME,
@@ -39,6 +40,9 @@ import {
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
   useTrackedItemsPaginatedByDay,
+  constructExportData,
+  importActivity,
+  ExportImportData,
 } from "~/db";
 import {
   Link,
@@ -75,10 +79,12 @@ import {
   MenuItem,
   MenuIcon,
 } from "~/theme";
+import MoreVertIcon from "@material-ui/icons/MoreVert";
 import HistoryCalendar from "./HistoryCalendar";
 import DashboardContext from "./DashboardContext";
 import FullHistoryList from "./FullHistoryList";
 import paths from "~/paths";
+import FileSelector from "~/components/FileSelector";
 
 enum Mode {
   Calendar = 0,
@@ -154,8 +160,39 @@ const Dashboard = () => {
     setAnchorEl(null);
   };
 
+  const exportData = async () => {
+    const data = await constructExportData();
+    const dataS = JSON.stringify(data);
+    const blob = new Blob([dataS], { type: "text/json" });
+    downloadBlob(blob, "activity-export.json");
+  };
+
+  const fileSelector = React.useRef(null);
+
+  const importData = async () => {
+    fileSelector.current!.click();
+  };
+
+  const onImportData = (files: FileList) => {
+    if (files.length <= 0) return;
+    const f: File = files[0];
+    const fr = new FileReader();
+    fr.onload = () => {
+      try {
+        const data: ExportImportData = JSON.parse(fr.result as any);
+        (async () => {
+          await importActivity(data);
+        })();
+      } catch (err) {
+        console.error("Failed to parse JSON", err);
+      }
+    };
+    fr.readAsText(f);
+  };
+
   return (
     <DashboardContext.Provider value={{}}>
+      <FileSelector onSelected={onImportData} ref={fileSelector} />
       <Page title="Activity Dashboard">
         <div className="dashboard">
           <header className="header df fsb">
@@ -192,7 +229,7 @@ const Dashboard = () => {
                     aria-expanded={open ? "true" : undefined}
                     onClick={handleClick}
                   >
-                    <MenuIcon />
+                    <MoreVertIcon />
                   </IconButton>
                   <Menu
                     id="dashbboard-menu"
@@ -213,6 +250,8 @@ const Dashboard = () => {
                     <MenuItem onClick={() => clearTrackingStorage(config)}>
                       Clear storage
                     </MenuItem>
+                    <MenuItem onClick={exportData}>Export Data</MenuItem>
+                    <MenuItem onClick={importData}>Import Data</MenuItem>
                   </Menu>
                 </Grid>
               </Grid>
