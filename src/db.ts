@@ -11,7 +11,7 @@ import {
 } from "./constants";
 import { Configuration, ActTypeKey, TrackInfoRecord, DbHandle } from "./types";
 import React, { useEffect, useState } from "react";
-import { createIDBEntity } from "idb-orm";
+import { createIDBEntity } from "idb-query";
 
 export const openIDB = async () => {
   return await idb.openDB(DB_NAME, 1, {
@@ -154,43 +154,16 @@ export const allRecordsForDay = async (
 };
 
 type CT = Date;
-async function* recordsPaginated(
-  db: DbHandle,
-  cursor: CT,
+
+export const fetchRecords = async (
+  startingDate_: Date,
   options: {
     perPage: number;
     reversed: boolean;
   }
-) {
-  const fromDate = new Date(cursor);
-  const toDate = new Date();
-  const tx = db.transaction(TRACK_INFO_STORE_NAME, "readonly");
-  const store = tx.objectStore(TRACK_INFO_STORE_NAME);
-  const index = store.index("created");
-  const range = IDBKeyRange.bound(fromDate, toDate);
-  const res: TrackInfoRecord[] = [];
-  for await (const c of index.iterate(range)) {
-    if (res.length >= options.perPage) {
-      break;
-    }
-    res.push(c.value);
-    yield c.value;
-  }
-  const nextCursor = res[res.length - 1].created;
-  return [res, nextCursor];
-}
-
-interface PaginatedController<T> {
-  data: T;
-  refresh: () => void;
-  nextPage: () => void;
-}
-
-const fetchData = async (
-  startingDate: Date,
-  perPage: number,
-  reversed: boolean = false
-) => {
+): Promise<[TrackInfoRecord[], Date, boolean]> => {
+  const startingDate =
+    startingDate_ ?? (options.reversed ? new Date() : new Date(0));
   let qry = TrackedRecord.query()
     .byIndex("created")
     .from(startingDate)
@@ -201,43 +174,114 @@ const fetchData = async (
         item.created.getDate()
       ).getTime();
     })
-    .take(perPage);
-  if (reversed) {
+    .take(options.perPage);
+  if (options.reversed) {
     qry = qry.desc();
   }
   const res: Map<any, any> = await qry.all();
-  const resFlattened = Array.from(res.entries()).reduce((acc, ti) => {
+  const data = Array.from(res.entries()).reduce((acc, ti) => {
     for (const item of ti[1]) {
       acc.push(item);
     }
     return acc;
   }, []);
-  return resFlattened;
+  const nextCursor =
+    data.length !== 0 ? data[data.length - 1].created : startingDate;
+  const done = nextCursor.getTime() === startingDate.getTime();
+  return [data, nextCursor, done];
 };
 
-export function useTrackedItemsPaginatedByDay(
-  options: {
-    perPage?: number;
-    reversed?: boolean;
-    startingDate?: Date;
-  } = {}
-): PaginatedController<TrackInfoRecord[]> {
-  const startingDate = options?.startingDate ?? new Date();
+interface PaginatedController<T> {
+  data: T[];
+  refresh: () => void;
+  loadedEverything: boolean;
+  loading: boolean;
+}
+
+interface PagedPaginatedController<T> extends PaginatedController<T> {
+  nextPage: () => void;
+}
+
+interface CursorPaginatedController<T> extends PaginatedController<T> {
+  loadMore: () => void;
+}
+
+interface PaginatedOptions {
+  perPage?: number;
+  reversed?: boolean;
+  startingDate?: Date;
+}
+
+type PaginatedDataFetcher<T, C> = (
+  cursor: C,
+  options: PaginatedOptions
+) => Promise<[T[], C, boolean]>;
+
+export function usePagedPaginatedController<T, C>(
+  fetchData: PaginatedDataFetcher<T, C>,
+  options: PaginatedOptions = {}
+): PagedPaginatedController<T> {
+  const startingDate = options?.startingDate ?? null;
   const reversed = options?.reversed ?? false;
   const perPage = options?.perPage ?? 10;
-  const [data, setData] = useState<TrackInfoRecord[]>([]);
+  const [data, setData] = useState<T[]>([]);
+  const [cursor, setCursor] = useState<C | null>(null);
+  const [loadedEverything, setLoadedEverything] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const fetchDataAndSaveCursor = React.useCallback(async () => {
-    const c = data.length !== 0 ? data[data.length - 1].created : startingDate;
-    const newData = await fetchData(c, perPage, reversed);
+    if (loadedEverything) return;
+    setLoading(true);
+    const [newData, newCursor, done] = await fetchData(cursor, options);
+    if (done) {
+      setLoadedEverything(true);
+    }
     setData(newData);
-  }, [data]);
+    setCursor(newCursor);
+    setLoading(false);
+  }, [data, cursor]);
   useEffect(() => {
     fetchDataAndSaveCursor();
   }, []);
   const nextPage = React.useCallback(() => {
     fetchDataAndSaveCursor();
   }, [fetchDataAndSaveCursor]);
-  return { data, nextPage, refresh: () => {} };
+  return { data, nextPage, refresh: () => {}, loadedEverything, loading };
+}
+
+export function useCursorPaginatedController<T, C>(
+  fetchData: PaginatedDataFetcher<T, C>,
+  options: PaginatedOptions = {}
+): CursorPaginatedController<T> {
+  const startingDate = options?.startingDate ?? null;
+  const reversed = options?.reversed ?? false;
+  const perPage = options?.perPage ?? 10;
+  const [data, setData] = useState<T[]>([]);
+  const [cursor, setCursor] = useState<C | null>(null);
+  const [loadedEverything, setLoadedEverything] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const fetchDataAndSaveCursor = React.useCallback(async () => {
+    if (loadedEverything) {
+      return;
+    }
+    if (loading) {
+      return;
+    }
+    setLoading(true);
+    const [newData, newCursor, done] = await fetchData(cursor, options);
+    if (done) {
+      setLoadedEverything(true);
+    }
+    setData([...data, ...newData]);
+    setCursor(newCursor);
+    setLoading(false);
+  }, [loading, loadedEverything, data, cursor]);
+  useEffect(() => {
+    fetchDataAndSaveCursor();
+  }, []);
+  const loadMore = React.useCallback(() => {
+    fetchDataAndSaveCursor();
+  }, [fetchDataAndSaveCursor]);
+  return { data, loadMore, refresh: () => {}, loadedEverything, loading };
 }
 
 export const clearUserLogs = async (db: DbHandle) => {

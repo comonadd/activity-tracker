@@ -23,7 +23,7 @@ import {
   Grid,
   Breadcrumbs,
 } from "~/theme";
-import React from "react";
+import React, { useState } from "react";
 import AppContext from "~/AppContext";
 import DashboardContext from "./DashboardContext";
 import {
@@ -39,11 +39,12 @@ import {
 } from "~/routeManager";
 import {
   openIDB,
+  fetchRecords,
   clearTrackingStorage,
   useIndexedDbGetAllFromStore,
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
-  useTrackedItemsPaginatedByDay,
+  useCursorPaginatedController,
 } from "~/db";
 import {
   DbHandle,
@@ -56,6 +57,34 @@ import {
 
 interface HistoryCalendarProps {}
 
+const Sentry = React.forwardRef(
+  (props: { whenInView: () => void }, containerRef: any) => {
+    const ref = React.useRef(null);
+    React.useLayoutEffect(() => {
+      if (!ref.current) {
+        console.error("Couldn't get ref");
+        return;
+      }
+      let options = {
+        root: null,
+        rootMargin: "0px",
+        threshold: 0.5,
+      } as any;
+      let observer = new IntersectionObserver((a) => {
+        const e: any = a[0];
+        if (e.isIntersecting) {
+          props.whenInView();
+        }
+      }, options);
+      observer.observe(ref.current!);
+      return () => {
+        observer.unobserve(ref.current!);
+      };
+    }, [props.whenInView]);
+    return <div style={{ height: 10 }} className="SENTRY" ref={ref}></div>;
+  }
+);
+
 const HistoryCalendar = (props: HistoryCalendarProps) => {
   const lowColor = [20, 20, 20];
   const highColor = [0, 255, 0];
@@ -65,10 +94,13 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
   const lowProbBound = 0;
   const rangeK = highColorBound / highProbBound;
   const { config } = React.useContext(AppContext);
-  const trackedRecordsP = useTrackedItemsPaginatedByDay({
-    reversed: true,
-    perPage: 30,
-  });
+  const trackedRecordsP = useCursorPaginatedController<TrackInfoRecord, Date>(
+    fetchRecords,
+    {
+      reversed: true,
+      perPage: 30,
+    }
+  );
   const trackedRecords = trackedRecordsP.data;
   const trackedRecordsGrouped: TrackedRecordsGrouped = React.useMemo(() => {
     if (!trackedRecords || trackedRecords.length === 0) return new Map();
@@ -114,10 +146,22 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
       );
     });
   }, [trackedRecordsGrouped, allDayDates]);
+  const containerRef = React.useRef(null);
+  const loadMore = React.useCallback(() => {
+    if (trackedRecordsP.loading) {
+      return;
+    }
+    if (trackedRecordsP.loadedEverything) {
+      return;
+    }
+    (async () => {
+      await trackedRecordsP.loadMore();
+    })();
+  }, [trackedRecordsP]);
   return (
-    <div className="full-history-calendar">
-      {renderedCalendar}
-      <Button onClick={trackedRecordsP.nextPage}>Next page</Button>
+    <div className="full-history-calendar" ref={containerRef}>
+      <div className="full-history-calendar-items">{renderedCalendar}</div>
+      <Sentry whenInView={loadMore} ref={containerRef} />
     </div>
   );
 };

@@ -51,13 +51,37 @@
 .header {
 }
 
-.full-history-calendar {
+.full-history-calendar-items {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   grid-gap: 16px;
+  min-height: 100vh;
+}
+
+@media screen and (max-width: 1000px) {
+  .full-history-calendar-items {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-gap: 8px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .full-history-calendar-items {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media screen and (max-width: 460px) {
+  .full-history-calendar-items {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .calendar-item {
   padding: 12px;
   cursor: pointer;
+  min-height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

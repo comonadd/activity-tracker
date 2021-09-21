@@ -39,7 +39,6 @@ import {
   useIndexedDbGetAllFromStore,
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
-  useTrackedItemsPaginatedByDay,
   constructExportData,
   importActivity,
   ExportImportData,

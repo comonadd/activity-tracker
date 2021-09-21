@@ -38,7 +38,6 @@ import {
   useIndexedDbGetAllFromStore,
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
-  useTrackedItemsPaginatedByDay,
 } from "./db";
 import "./app.css";
 import "./dashboard.css";

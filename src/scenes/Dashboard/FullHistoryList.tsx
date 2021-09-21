@@ -38,7 +38,8 @@ import {
   useIndexedDbGetAllFromStore,
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
-  useTrackedItemsPaginatedByDay,
+  fetchRecords,
+  usePagedPaginatedController,
 } from "~/db";
 import {
   Link,
@@ -160,10 +161,13 @@ const FullHistoryDay = (props: {
 
 const FullHistoryList = () => {
   const { config } = useContext(AppContext);
-  const trackedRecordsP = useTrackedItemsPaginatedByDay({
-    reversed: true,
-    perPage: 10,
-  });
+  const trackedRecordsP = usePagedPaginatedController<TrackInfoRecord, Date>(
+    fetchRecords,
+    {
+      reversed: true,
+      perPage: 10,
+    }
+  );
   const trackedRecords = trackedRecordsP.data;
   const trackedRecordsGrouped: TrackedRecordsGrouped = React.useMemo(() => {
     if (!trackedRecords || trackedRecords.length === 0) return new Map();
