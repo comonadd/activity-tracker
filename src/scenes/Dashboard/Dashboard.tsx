@@ -188,6 +188,7 @@ const Dashboard = () => {
     };
     fr.readAsText(f);
   };
+  const [populatingStorage, setPopulatingStorage] = useState(false);
 
   return (
     <DashboardContext.Provider value={{}}>
@@ -241,7 +242,14 @@ const Dashboard = () => {
                   >
                     {process.env.NODE_ENV === "development" && (
                       <MenuItem
-                        onClick={() => populateStorageWithRandomData(config)}
+                        onClick={() => {
+                          (async () => {
+                            setPopulatingStorage(true);
+                            await populateStorageWithRandomData(config);
+                            setPopulatingStorage(false);
+                          })();
+                        }}
+                        disabled={populatingStorage}
                       >
                         Populate storage with random data
                       </MenuItem>

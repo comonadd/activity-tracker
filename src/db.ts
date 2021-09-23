@@ -1,5 +1,6 @@
 import * as idb from "idb/with-async-ittr.js";
 import {
+  IDBPDatabase,
   IDBPIndex,
   IDBPObjectStore,
   IDBPCursorWithValueIteratorValue,
@@ -9,15 +10,17 @@ import {
   TRACK_INFO_STORE_NAME,
   USER_LOG_STORE_NAME,
 } from "./constants";
-import { Configuration, ActTypeKey, TrackInfoRecord, DbHandle } from "./types";
+import { Configuration, ActTypeKey, TrackInfoRecord } from "./types";
 import React, { useEffect, useState } from "react";
-import { createIDBEntity } from "idb-query";
+import { DbHandle, createIDBEntity } from "idb-query";
+import { calculateUrlType } from "./util";
 
 export const openIDB = async () => {
   return await idb.openDB(DB_NAME, 1, {
     upgrade(upgradeDb, oldVersion, newVersion, transaction) {
       if (!upgradeDb.objectStoreNames.contains(TRACK_INFO_STORE_NAME)) {
         const tiDb = upgradeDb.createObjectStore(TRACK_INFO_STORE_NAME, {
+          keyPath: "id",
           autoIncrement: true,
         });
         tiDb.createIndex("url", "url", { unique: false });
@@ -25,6 +28,7 @@ export const openIDB = async () => {
       }
       if (!upgradeDb.objectStoreNames.contains(USER_LOG_STORE_NAME)) {
         const tiDb = upgradeDb.createObjectStore(USER_LOG_STORE_NAME, {
+          keyPath: "id",
           autoIncrement: true,
         });
         tiDb.createIndex("created", "created", { unique: false });
@@ -33,7 +37,7 @@ export const openIDB = async () => {
   });
 };
 
-const db = openIDB();
+const db: Promise<DbHandle> = openIDB() as any;
 
 // Single record = one visit to a particular URL
 export const TrackedRecord = createIDBEntity<TrackInfoRecord, "created">(
@@ -87,8 +91,8 @@ export function useIndexedDbHandle(): DbHandle {
   const [handle, setHandle] = React.useState<DbHandle>(null);
   React.useEffect(() => {
     (async () => {
-      const db = await openIDB();
-      setHandle(db);
+      const ddb = await openIDB();
+      setHandle(ddb);
     })();
   }, []);
   return handle;
@@ -317,4 +321,22 @@ export const importActivity = async (
     await TrackedRecord.create(record);
   }
   return true;
+};
+
+type Pair<A, B> = [A, B];
+
+export const recalculateRecordTypes = async function* (
+  config: Configuration<any>
+): AsyncGenerator<Pair<number, number>> {
+  const allRecords = await TrackedRecord.query().all();
+  const totalRecords = allRecords.length;
+  let processed = 0;
+  for (const rec of allRecords) {
+    await TrackedRecord.replace(rec.created, {
+      ...rec,
+      type: calculateUrlType(config, rec.url),
+    });
+    ++processed;
+    yield [processed, totalRecords];
+  }
 };

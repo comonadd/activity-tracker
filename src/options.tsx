@@ -19,30 +19,63 @@ import {
   clearUserLogs,
   useIndexedDbHandle,
   UserLog,
+  recalculateRecordTypes,
 } from "./db";
 import FormHelperText from "@material-ui/core/FormHelperText";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 const logsPerPage = 20;
 
 const OptionsPage = () => {
   const [config, setConfig] =
     useExtStorage<Configuration<any>>("tracker-config");
+  const [initialConfigS, setInitialConfigS] = useState<string>("");
   const [configS, setConfigS] = useState<string>("");
   useEffect(() => {
-    setConfigS(jsonBeautify(config, null, 2, 100));
+    const jsonS = jsonBeautify(config, null, 2, 100);
+    setInitialConfigS(jsonS);
+    setConfigS(jsonS);
   }, [config]);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [savingStep, setSavingStep] = useState<string | null>(null);
+  const [totalRecordsToProcess, setTotalRecordsToProcess] =
+    useState<number>(-1);
+  const [processedRecords, setProcessedRecords] = useState<number>(0);
+
   const save = () => {
     try {
-      const c = JSON.parse(configS);
-      if (c) {
-        setConfig(c);
-      }
-      setError(null);
+      (async () => {
+        setSaving(true);
+        const c = JSON.parse(configS);
+        if (c) {
+          setConfig(c);
+        }
+        let k = 0;
+        const UI_UPDATE_INTERVAL = 100;
+        for await (const [processed, total] of recalculateRecordTypes(config)) {
+          if (k >= UI_UPDATE_INTERVAL) {
+            setTotalRecordsToProcess(total);
+            setProcessedRecords(processed);
+            setSavingStep(
+              `Recalculating record types (${processed}/${total})...`
+            );
+            k = 0;
+          } else {
+            ++k;
+          }
+        }
+        setTotalRecordsToProcess(-1);
+        setProcessedRecords(0);
+        setSaving(false);
+        setSavingStep(null);
+        setError(null);
+      })();
     } catch (err) {
       setError(err);
     }
   };
+
   const db = useIndexedDbHandle();
   const [logs, setLogs] = useState<UserLogMessage[]>([]);
   const fetchLogs = async (timestamp: Date) => {
@@ -81,19 +114,52 @@ const OptionsPage = () => {
     });
   }, [logs]);
 
+  const didSomethingChange = React.useMemo(
+    () => initialConfigS !== configS,
+    [initialConfigS, configS]
+  );
+
+  const processedRecordsPerc =
+    totalRecordsToProcess === -1
+      ? -1
+      : Math.round((processedRecords / totalRecordsToProcess) * 100);
+
   return (
     <div className="config-page">
       <div className="config-editor mb-4">
-        <div className="df fsb fcv pv-2">
-          <Typography component="h1" variant="h5">
-            Config editor
-          </Typography>
-          <div className="editor-controls">
-            <Button color="primary" onClick={save}>
-              Save configuration
-            </Button>
+        <header className="pv-2">
+          <div className="df fsb fcv">
+            <div className="df">
+              <Typography component="h1" variant="h5">
+                Config editor
+              </Typography>
+            </div>
+            <div className="editor-controls">
+              <Button
+                color="primary"
+                onClick={save}
+                disabled={saving || !didSomethingChange}
+              >
+                <span>Save configuration</span>
+              </Button>
+            </div>
           </div>
-        </div>
+          {saving && (
+            <div className="df fcv mt-1">
+              {processedRecordsPerc !== -1 && (
+                <CircularProgress
+                  variant="determinate"
+                  size={24}
+                  thickness={4}
+                  value={processedRecordsPerc}
+                />
+              )}
+              <span className="ml-4 fs-14">
+                {savingStep !== null ? savingStep : "Saving..."}
+              </span>
+            </div>
+          )}
+        </header>
         {error !== null && (
           <FormHelperText error>{error.message}</FormHelperText>
         )}

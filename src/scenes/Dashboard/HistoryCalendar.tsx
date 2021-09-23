@@ -10,6 +10,9 @@ import {
   monthName,
   monthAndYear,
   DefaultMap,
+  RGB,
+  colorGradient,
+  rgbToCSS,
 } from "~/util";
 import {
   IconButton,
@@ -62,13 +65,12 @@ import Sentry from "~/components/ScrollSentry";
 interface HistoryCalendarProps {}
 
 // TODO: Move this to configuration
-const lowColor = [250, 250, 250];
-const highColor = [0, 255, 0];
+const lowColor: RGB = { r: 250, g: 250, b: 250 };
+const highColor: RGB = { r: 0, g: 255, b: 0 };
 const highColorBound = 255;
 const highProbBound = 1000;
 const lowProbBound = 0;
 const rangeK = highColorBound / highProbBound;
-const ck = highColor.map((v, i) => v - lowColor[i]);
 
 const CalendarDay = (props: {
   config: Configuration<any>;
@@ -87,11 +89,8 @@ const CalendarDay = (props: {
     highProbBound
   );
   const pK = rangeK * productivityLevel;
-  const pPerc = pK / 255;
-  const r = lowColor[0] + ck[0] * pPerc;
-  const g = lowColor[1] + ck[1] * pPerc;
-  const b = lowColor[2] + ck[2] * pPerc;
-  const backgroundColor = `rgb(${r}, ${g}, ${b})`;
+  const pPerc = pK / highColorBound;
+  const backgroundColor = rgbToCSS(colorGradient(lowColor, highColor, pPerc));
   return (
     <Paper
       elevation={1}
@@ -174,7 +173,9 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
     [allDayDates]
   );
   const renderedCalendar = React.useMemo(() => {
-    return Array.from(allMonthsByYear.keys()).map((monthDate: number) => {
+    const months = Array.from(allMonthsByYear.keys());
+    if (months.length === 0) return "No records";
+    return months.map((monthDate: number) => {
       const monthEntries: Day[] = allMonthsByYear.get(monthDate);
       return (
         <MonthGroup
