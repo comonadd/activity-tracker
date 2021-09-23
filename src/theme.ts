@@ -15,3 +15,5 @@ export { default as ListIcon } from "@material-ui/icons/List";
 export { default as Menu } from "@material-ui/core/Menu";
 export { default as MenuItem } from "@material-ui/core/MenuItem";
 export { default as MenuIcon } from "@material-ui/icons/Menu";
+export { default as Tabs } from "@material-ui/core/Tabs";
+export { default as Tab } from "@material-ui/core/Tab";

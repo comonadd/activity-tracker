@@ -104,11 +104,8 @@ export async function populateStorageWithRandomData<AK extends ActTypeKey>(
   config: Configuration<AK>
 ) {
   const startDate = randomDateBetween(new Date(2000, 0, 0), new Date());
-  const randomRecords = generateRandomRecords(config, 30, 15, startDate);
-  for (let i = 0; i < randomRecords.length; ++i) {
-    const item = randomRecords[i];
-    addTrackedItem(item);
-  }
+  const randomRecords = generateRandomRecords(config, 365, 15, startDate);
+  await Promise.all(randomRecords.map(addTrackedItem));
 }
 
 export function rewardForActivityType<AK extends ActTypeKey>(
@@ -120,6 +117,13 @@ export function rewardForActivityType<AK extends ActTypeKey>(
     return 0;
   }
   return ati.reward;
+}
+
+export function recordProd<AK extends ActTypeKey>(
+  config: Configuration<AK>,
+  rec: TrackInfoRecord
+): number {
+  return rewardForActivityType(config, rec.type);
 }
 
 // Productivity is a measure of productive activity during the day. Ranges
@@ -227,3 +231,26 @@ export class DefaultMap<K, V> extends Map<K, V> {
     return v;
   }
 }
+
+export interface RGB {
+  r: number;
+  g: number;
+  b: number;
+}
+
+export const rgbToCSS = (c: RGB) => `rgb(${c.r}, ${c.g}, ${c.b})`;
+export const colorGradient = (lowColor: RGB, highColor: RGB, pPerc: number) => {
+  const r = lowColor.r + (highColor.r - lowColor.r) * pPerc;
+  const g = lowColor.g + (highColor.g - lowColor.g) * pPerc;
+  const b = lowColor.b + (highColor.b - lowColor.b) * pPerc;
+  return { r, g, b };
+};
+
+export const toDuration = (dur: Date | null) =>
+  dur !== null ? dur.toISOString().substr(11, 8) : "N/A";
+
+export const interpRangeZero = (maxFrom: number, maxTo: number, v: number) => {
+  const rangeK = maxTo / maxFrom;
+  const pK = rangeK * v;
+  return pK;
+};
