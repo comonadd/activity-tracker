@@ -9,10 +9,10 @@ const BUILD = path.resolve(__dirname, "build");
 module.exports = {
   mode: DEV ? "development" : "production",
   entry: {
-      "dashboard": `${SRC}/dashboard.tsx`,
-      "options": `${SRC}/options.tsx`,
-      "popup": `${SRC}/popup.ts`,
-      "background": `${SRC}/background.ts`,
+    dashboard: `${SRC}/dashboard.tsx`,
+    options: `${SRC}/options.tsx`,
+    popup: `${SRC}/popup.ts`,
+    background: `${SRC}/background.ts`,
   },
   output: {
     path: BUILD,
@@ -24,9 +24,7 @@ module.exports = {
     rules: [
       {
         test: /\.tsx?$/,
-        include: [
-          path.resolve(__dirname, "src")
-        ],
+        include: [path.resolve(__dirname, "src")],
         use: "ts-loader",
         exclude: /node_modules/,
       },
@@ -37,26 +35,17 @@ module.exports = {
     ],
   },
   resolve: {
-    modules: ["node_modules",path.resolve(__dirname, "app")],
+    modules: ["node_modules", path.resolve(__dirname, "app")],
     extensions: [".js", ".json", ".tsx", ".ts", ".css"],
     alias: {
-      '~': SRC,
+      "~": SRC,
     },
-  },
-  performance: {
-    hints: "warning", // enum
-    maxAssetSize: 200000, // int (in bytes),
-    maxEntrypointSize: 400000, // int (in bytes)
-    assetFilter: function(assetFilename) {
-      // Function predicate that provides asset filenames
-      return assetFilename.endsWith('.css') || assetFilename.endsWith('.js');
-    }
   },
   devtool: "source-map", // enum
   context: __dirname, // string (absolute path!)
   target: "web", // enum
   plugins: [
-     new CopyPlugin({
+    new CopyPlugin({
       patterns: [
         { from: `${SRC}/popup.html`, to: BUILD },
         { from: `${SRC}/popup.css`, to: BUILD },
