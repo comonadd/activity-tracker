@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useState, useContext } from "react";
 import Page from "~/components/Page";
-import { Link } from "~/routeManager";
+import { Link as RLink } from "~/routeManager";
 import { allRecordsForDay, useIndexedDbHandle } from "~/db";
 import {
   DbHandle,
@@ -18,7 +18,7 @@ import {
   DEFAULT_ACTIVITY_MATCHER,
   DEFAULT_CONFIG,
 } from "~/constants";
-import { Tabs, Tab, Paper, Typography, Breadcrumbs } from "~/theme";
+import { Link, Tabs, Tab, Paper, Typography, Breadcrumbs } from "~/theme";
 import AppContext from "~/AppContext";
 import {
   dateFormatHMS,
@@ -186,7 +186,7 @@ const DayPage = (props: DayPageProps) => {
   return (
     <Page title={`${year}/${month}/${day}`}>
       <Breadcrumbs aria-label="breadcrumb">
-        <Link color="inherit" to="/">
+        <Link color="inherit" to="/" component={RLink}>
           Dashboard
         </Link>
       </Breadcrumbs>

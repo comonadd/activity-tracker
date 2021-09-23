@@ -71,7 +71,6 @@ import {
   ExpandMoreIcon,
   Paper,
   Grid,
-  Breadcrumbs,
 } from "~/theme";
 import Dashboard from "~/scenes/Dashboard";
 import "~/app.css";

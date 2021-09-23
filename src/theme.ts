@@ -17,3 +17,4 @@ export { default as MenuItem } from "@material-ui/core/MenuItem";
 export { default as MenuIcon } from "@material-ui/icons/Menu";
 export { default as Tabs } from "@material-ui/core/Tabs";
 export { default as Tab } from "@material-ui/core/Tab";
+export { default as Link } from "@material-ui/core/Link";

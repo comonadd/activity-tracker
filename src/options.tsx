@@ -23,6 +23,8 @@ import {
 } from "./db";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import { Breadcrumbs, Link } from "~/theme";
+import paths from "~/paths";
 
 const logsPerPage = 20;
 
@@ -126,6 +128,11 @@ const OptionsPage = () => {
 
   return (
     <div className="config-page">
+      <Breadcrumbs aria-label="breadcrumb">
+        <Link color="inherit" href={paths.DASHBOARD_PAGE}>
+          Dashboard
+        </Link>
+      </Breadcrumbs>
       <div className="config-editor mb-4">
         <header className="pv-2">
           <div className="df fsb fcv">
