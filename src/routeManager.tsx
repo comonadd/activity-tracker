@@ -61,17 +61,20 @@ export const useLocation = (): Location => {
   return location;
 };
 
-export const Link = (props: { to: string; children: any } & any) => {
-  return (
-    <a
-      href={props.to}
-      {...props}
-      onClick={(e) => {
-        e.preventDefault();
-        history.push(props.to);
-      }}
-    >
-      {props.children}
-    </a>
-  );
-};
+export const Link = React.forwardRef(
+  (props: { to: string; children: any } & any, ref) => {
+    return (
+      <a
+        ref={ref}
+        href={props.to}
+        {...props}
+        onClick={(e) => {
+          e.preventDefault();
+          history.push(props.to);
+        }}
+      >
+        {props.children}
+      </a>
+    );
+  }
+);
