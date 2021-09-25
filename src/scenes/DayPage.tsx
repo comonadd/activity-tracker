@@ -35,6 +35,13 @@ import {
 } from "~/util";
 import { DataGrid } from "@mui/x-data-grid";
 import * as d3 from "d3";
+import { select } from "d3-selection";
+import { scaleLinear, scaleTime } from "d3-scale";
+import { range, bin, max } from "d3-array";
+import { format } from "d3-format";
+import { randomBates } from "d3-random";
+import { axisBottom } from "d3-axis";
+import { axisLeft } from "d3";
 
 interface DayPageProps {
   year: string;
@@ -149,7 +156,7 @@ const FullDayLog = (props: { records: TrackInfoRecord[] }) => {
         const durationS = toDuration(durationD);
         return {
           ...rec,
-          created: dateToString(rec.created),
+          created: dateFormatHMS(rec.created),
           id: rec.created.getTime(),
           duration: durationS,
         };
@@ -163,112 +170,200 @@ const FullDayLog = (props: { records: TrackInfoRecord[] }) => {
   );
 };
 
-const MultilineChart = function <T>({
-  data,
-  dimensions,
-  getPointValue,
-  getPointX,
-}: {
-  data: T[];
-  dimensions: {
-    width: number;
-    height: number;
-    margin: { right: number; left: number; bottom: number; top: number };
-  };
-  getPointValue: (d: T) => number;
-  getPointX: (d: T) => Date;
-}) {
-  const svgRef = React.useRef(null);
-  const { width, height, margin } = dimensions;
-  const svgWidth = width + margin.left + margin.right;
-  const svgHeight = height + margin.top + margin.bottom;
-
-  React.useEffect(() => {
-    // If no data, don't render
-    if (data.length === 0) return null;
-
-    const xScale = d3
-      .scaleTime()
-      .domain(d3.extent(data, getPointX))
-      .range([0, width]);
-
-    const yScale = d3
-      .scaleLinear()
-      .domain([d3.min(data, getPointValue), d3.max(data, getPointValue)])
-      .range([height, 0]);
-
-    // Create root container where we will append all other chart elements
-    const svgEl = d3.select(svgRef.current);
-    svgEl.selectAll("*").remove(); // Clear svg content before adding new elements
-    const svg = svgEl
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    // Add X grid lines with labels
-    const xAxis = d3
-      .axisBottom(xScale)
-      .ticks(5)
-      .tickSize(-height + margin.bottom);
-    const xAxisGroup = svg
-      .append("g")
-      .attr("transform", `translate(0, ${height - margin.bottom})`)
-      .call(xAxis);
-    xAxisGroup.select(".domain").remove();
-    xAxisGroup.selectAll("line").attr("stroke", "rgb(0, 0, 0)");
-    xAxisGroup
-      .selectAll("text")
-      .attr("color", "black")
-      .attr("font-size", "0.75rem");
-
-    // Add Y grid lines with labels
-    const yAxis = d3
-      .axisLeft(yScale)
-      .ticks(5)
-      .tickSize(-width)
-      .tickFormat((val) => `${val}%`);
-    const yAxisGroup = svg.append("g").call(yAxis);
-    yAxisGroup.select(".domain").remove();
-    yAxisGroup.selectAll("line").attr("stroke", "rgb(0, 0, 0)");
-    yAxisGroup
-      .selectAll("text")
-      .attr("color", "black")
-      .attr("font-size", "0.75rem");
-
-    svg
-      .selectAll(".line")
-      .data(data)
-      .enter()
-      .append("rect")
-      .attr("x", (d, i) => i * 70)
-      .attr("y", (d, i) => height - getPointValue(d))
-      .attr("width", 25)
-      .attr("height", (d: T, i) => getPointValue(d))
-      .attr("fill", "green");
-  }, [data]);
-
-  return <svg ref={svgRef} width={svgWidth} height={svgHeight} />;
-};
-
-const DayGraph = (props: { records: TrackInfoRecord[] }) => {
+const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
   const { config } = useContext(AppContext);
-  const { records } = props;
+  const { dayDate, records } = props;
   const container = React.useRef(null);
   const color = "#00ff00";
   const margin = { left: 15, right: 15, top: 15, bottom: 15 };
-  const width = 1000;
-  const height = 500;
+  const renderWidth = 900;
+  const renderHeight = 500;
+
+  const stc = {
+    workRelated: "#840032",
+    porn: "#E59500",
+    reading: "#02040F",
+    dumbEntertainment: "#E5DADA",
+  };
+  const recordColor = (record: TrackInfoRecord) => (stc as any)[record.type];
+
+  interface DataItem {
+    x0: Date;
+    x1: Date;
+    length: number;
+    rec: TrackInfoRecord;
+  }
+
+  let data: DataItem[] = useMemo(
+    () =>
+      props.records.map((r, idx) => {
+        const nextItem =
+          idx != props.records.length - 1 ? props.records[idx + 1] : null;
+        const nextCreated =
+          nextItem !== null
+            ? nextItem.created
+            : new Date(r.created.getTime() + 1000);
+        return {
+          x0: r.created,
+          x1: nextCreated,
+          length: recordProd(config, r),
+          rec: r,
+        };
+      }),
+    [props.records]
+  );
+  let formatCount = format(",.0f");
+  const spaceBetween = 1;
+  const strokeWidth = 1;
+
+  useEffect(() => {
+    if (!container.current) return;
+    if (data.length === 0) return;
+
+    const dayStart = dayDate;
+    const dayEnd = new Date(dayDate.getTime() + 24 * 60 * 60 * 1000);
+
+    let hist = select(container.current);
+    hist.selectAll("*").remove();
+
+    let margin = { top: 10, right: 30, bottom: 30, left: 30 };
+    let width = renderWidth - margin.left - margin.right;
+    let height = renderHeight - margin.top - margin.bottom;
+    let g = hist
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    let x = scaleTime().domain([dayStart, dayEnd]).range([0, width]);
+
+    const bins = data;
+
+    const [minHeight, maxHeight] = d3.extent(data, (d) => d.length);
+    let y = scaleLinear().domain([minHeight, maxHeight]).range([height, 0]);
+
+    const lineGenerator = d3
+      .line<any>()
+      .x(function (d) {
+        return x(d.x0);
+      })
+      .y(function (d) {
+        return y(d.length);
+      })
+      .curve(d3.curveBasis);
+
+    const areaGenerator = d3
+      .area<DataItem>()
+      .x(function (d) {
+        return x(d.x0);
+      })
+      .y0(function (d) {
+        return strokeWidth;
+      })
+      .y1(function (d) {
+        return height;
+      })
+      .curve(d3.curveBasis);
+
+    const div = d3
+      .select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+    // by site grouping
+    for (let i = 0; i < bins.length; ++i) {
+      const next = i !== bins.length - 1 ? bins[i + 1] : bins[bins.length - 1];
+      g.append("path")
+        .data([[bins[i], next]])
+        .attr("d", areaGenerator)
+        .style("fill", (d) => {
+          return recordColor(d[0].rec);
+        })
+        .style("opacity", 0.75);
+    }
+
+    const emptyAreaGenerator = d3
+      .area<DataItem>()
+      .x(function (d) {
+        return x(d.x0);
+      })
+      .y0(function (d) {
+        return 0;
+      })
+      .y1(function (d) {
+        return y(d.length);
+      })
+      .curve(d3.curveBasis);
+
+    g.append("path")
+      .attr("id", "empty-area")
+      .data([[...bins]])
+      .attr("d", emptyAreaGenerator)
+      .style("fill", "#fff");
+
+    const emptyAreaOnTheEdgesGenerator = d3
+      .area<DataItem>()
+      .x(function (d) {
+        return x(d.x0);
+      })
+      .y0(function (d) {
+        return 0;
+      })
+      .y1(function (d) {
+        return height;
+      });
+
+    const K = 500_000;
+    g.append("path")
+      .attr("id", "hello-bitches")
+      .data([
+        [
+          { x0: dayStart, length: maxHeight } as any,
+          { ...bins[0], x0: new Date(bins[0].x0.getTime() + K) },
+        ],
+      ])
+      .attr("d", emptyAreaOnTheEdgesGenerator)
+      .style("fill", "#fff");
+
+    g.append("path")
+      .attr("id", "hello-bitches")
+      .data([
+        [
+          {
+            x0: new Date((bins[bins.length - 1].x0 as any).getTime() - K),
+            length: maxHeight,
+          } as any,
+          {
+            x0: dayEnd,
+            length: maxHeight,
+          },
+        ],
+      ])
+      .attr("d", emptyAreaOnTheEdgesGenerator)
+      .style("fill", "#fff");
+
+    // line
+    g.append("path")
+      .attr("id", "the-line")
+      .attr("d", lineGenerator(bins))
+      .attr("stroke", "#3C6E71")
+      .attr("stroke-width", strokeWidth)
+      .attr("fill", "transparent");
+
+    // x axis
+    g.append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", `translate(0, ${height})`)
+      .call(axisBottom(x).ticks(d3.timeHour.every(1)));
+
+    // y axis
+    g.append("g")
+      .attr("class", "axis axis--y")
+      .attr("transform", `translate(0, 0)`)
+      .call(axisLeft(y));
+  }, [data]);
+
   return (
-    <div>
-      <MultilineChart
-        data={records}
-        dimensions={{
-          width: 1000,
-          height: 500,
-          margin: { left: 20, right: 20, bottom: 20, top: 20 },
-        }}
-        getPointValue={(p) => recordProd(config, p)}
-        getPointX={(p: TrackInfoRecord) => p.created}
-      />
+    <div className="day-graph">
+      <svg ref={container} viewBox={`0 0 ${renderWidth} ${renderHeight}`}></svg>
     </div>
   );
 };
@@ -317,7 +412,7 @@ const DayPage = (props: DayPageProps) => {
         <TopSites records={records} />
       </TabPanel>
       <TabPanel value={value} index={2}>
-        <DayGraph records={records} />
+        <DayGraph dayDate={dayDate} records={records} />
       </TabPanel>
     </Page>
   );

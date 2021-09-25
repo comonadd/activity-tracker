@@ -21,6 +21,12 @@ const URL_SELECTION = [
   "https://google.com",
   "https://habr.ru",
   "https://www.github.com",
+  "https://reddit.com",
+  "https://twitch.tv",
+  "https://www.youtube.com",
+  "https://trello.com",
+  "https://stackoverflow.com",
+  "https://vc.ru",
 ];
 
 const chooseRandom = (arr: any[]) =>
@@ -60,6 +66,11 @@ export function calculateUrlType<AK extends ActTypeKey>(
   return null;
 }
 
+const dateAddDays = (d: Date, nDays: number) =>
+  new Date(d.getTime() + nDays * 24 * 60 * 60 * 1000);
+const dateAddHours = (d: Date, nHours: number) =>
+  new Date(d.getTime() + nHours * 60 * 60 * 1000);
+
 export function generateRandomRecords<AK extends ActTypeKey>(
   config: Configuration<AK>,
   nDays: number,
@@ -67,16 +78,23 @@ export function generateRandomRecords<AK extends ActTypeKey>(
   dateStart: Date
 ): TrackInfoRecord[] {
   let records = [];
-  const startHour = Math.round(Math.random() * 24);
-  const endHour = Math.min(23, startHour + Math.round(Math.random() * 3));
+  const startHour = 0;
+  const endHour = 24;
   const uds = dateStart.getTime();
+  const hoursPerRecord = 24 / nRecordsPerDay;
+  console.log("hours per record", hoursPerRecord);
+  const dateStartDay = new Date(
+    dateStart.getFullYear(),
+    dateStart.getMonth(),
+    dateStart.getDate()
+  );
   for (let day = 0; day < nDays; ++day) {
-    const dds = uds + day * 24 * 60 * 60 * 1000;
+    const dds = dateAddDays(dateStartDay, day);
+    console.log("GENERATING FOR", dds);
     for (let r = 0; r < nRecordsPerDay; ++r) {
       const url = randomUrl() + randomUrlPath();
-      const date = new Date(
-        dds + r * Math.round(Math.random() * 180) * 60 * 1000
-      );
+      const date = dateAddHours(dds, hoursPerRecord * r);
+      console.log(date);
       const t = calculateUrlType(config, url);
       if (t !== null) {
         records.push({
@@ -104,7 +122,7 @@ export async function populateStorageWithRandomData<AK extends ActTypeKey>(
   config: Configuration<AK>
 ) {
   const startDate = randomDateBetween(new Date(2000, 0, 0), new Date());
-  const randomRecords = generateRandomRecords(config, 365, 15, startDate);
+  const randomRecords = generateRandomRecords(config, 30, 50, startDate);
   await Promise.all(randomRecords.map(addTrackedItem));
 }
 

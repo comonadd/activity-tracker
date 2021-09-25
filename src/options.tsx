@@ -44,35 +44,34 @@ const OptionsPage = () => {
   const [totalRecordsToProcess, setTotalRecordsToProcess] =
     useState<number>(-1);
   const [processedRecords, setProcessedRecords] = useState<number>(0);
+  const recalc = async () => {
+    setSaving(true);
+    let k = 0;
+    const UI_UPDATE_INTERVAL = 100;
+    for await (const [processed, total] of recalculateRecordTypes(config)) {
+      if (k >= UI_UPDATE_INTERVAL) {
+        setTotalRecordsToProcess(total);
+        setProcessedRecords(processed);
+        setSavingStep(`Recalculating record types (${processed}/${total})...`);
+        k = 0;
+      } else {
+        ++k;
+      }
+    }
+    setTotalRecordsToProcess(-1);
+    setProcessedRecords(0);
+    setSaving(false);
+    setSavingStep(null);
+    setError(null);
+  };
 
   const save = () => {
     try {
-      (async () => {
-        setSaving(true);
-        const c = JSON.parse(configS);
-        if (c) {
-          setConfig(c);
-        }
-        let k = 0;
-        const UI_UPDATE_INTERVAL = 100;
-        for await (const [processed, total] of recalculateRecordTypes(config)) {
-          if (k >= UI_UPDATE_INTERVAL) {
-            setTotalRecordsToProcess(total);
-            setProcessedRecords(processed);
-            setSavingStep(
-              `Recalculating record types (${processed}/${total})...`
-            );
-            k = 0;
-          } else {
-            ++k;
-          }
-        }
-        setTotalRecordsToProcess(-1);
-        setProcessedRecords(0);
-        setSaving(false);
-        setSavingStep(null);
-        setError(null);
-      })();
+      const c = JSON.parse(configS);
+      if (c) {
+        setConfig(c);
+        recalc();
+      }
     } catch (err) {
       setError(err);
     }

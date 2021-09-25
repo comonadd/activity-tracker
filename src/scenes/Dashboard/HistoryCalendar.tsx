@@ -174,7 +174,14 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
   );
   const renderedCalendar = React.useMemo(() => {
     const months = Array.from(allMonthsByYear.keys());
-    if (months.length === 0) return "No records";
+    if (months.length === 0)
+      return (
+        <div className="w-100 h-100 f-100">
+          <Typography component="p" variant="subtitle1">
+            No tracked records found
+          </Typography>
+        </div>
+      );
     return months.map((monthDate: number) => {
       const monthEntries: Day[] = allMonthsByYear.get(monthDate);
       return (
