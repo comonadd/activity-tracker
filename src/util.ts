@@ -12,7 +12,7 @@ import {
   ActTypeKey,
   Configuration,
 } from "./types";
-import { addTrackedItem } from "./db";
+import { addTrackedItems, addTrackedItem } from "./db";
 import React, { useEffect, useState } from "react";
 import extAPI from "./extAPI";
 
@@ -82,7 +82,6 @@ export function generateRandomRecords<AK extends ActTypeKey>(
   const endHour = 24;
   const uds = dateStart.getTime();
   const hoursPerRecord = 24 / nRecordsPerDay;
-  console.log("hours per record", hoursPerRecord);
   const dateStartDay = new Date(
     dateStart.getFullYear(),
     dateStart.getMonth(),
@@ -90,11 +89,9 @@ export function generateRandomRecords<AK extends ActTypeKey>(
   );
   for (let day = 0; day < nDays; ++day) {
     const dds = dateAddDays(dateStartDay, day);
-    console.log("GENERATING FOR", dds);
     for (let r = 0; r < nRecordsPerDay; ++r) {
       const url = randomUrl() + randomUrlPath();
       const date = dateAddHours(dds, hoursPerRecord * r);
-      console.log(date);
       const t = calculateUrlType(config, url);
       if (t !== null) {
         records.push({
@@ -122,8 +119,8 @@ export async function populateStorageWithRandomData<AK extends ActTypeKey>(
   config: Configuration<AK>
 ) {
   const startDate = randomDateBetween(new Date(2000, 0, 0), new Date());
-  const randomRecords = generateRandomRecords(config, 30, 50, startDate);
-  await Promise.all(randomRecords.map(addTrackedItem));
+  const randomRecords = generateRandomRecords(config, 1200, 50, startDate);
+  await addTrackedItems(randomRecords);
 }
 
 export function rewardForActivityType<AK extends ActTypeKey>(
@@ -179,7 +176,6 @@ export function useExtStorage<T>(key: string): [T, (v: T) => void, LStatus] {
     });
   }, [key]);
   const setNewValue = (newValue: T) => {
-    console.log("setting new value", key, newValue);
     extAPI.storage.sync.set({ [key]: newValue });
     setData(newValue);
   };

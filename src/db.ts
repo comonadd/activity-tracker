@@ -1,39 +1,46 @@
 import * as idb from "idb/with-async-ittr.js";
 import {
-  IDBPDatabase,
-  IDBPIndex,
-  IDBPObjectStore,
-  IDBPCursorWithValueIteratorValue,
-} from "idb";
-import {
   DB_NAME,
   TRACK_INFO_STORE_NAME,
   USER_LOG_STORE_NAME,
 } from "./constants";
 import { Configuration, ActTypeKey, TrackInfoRecord } from "./types";
 import React, { useEffect, useState } from "react";
-import { DbHandle, createIDBEntity } from "idb-query";
-import { calculateUrlType } from "./util";
+import { GroupedQuery, DbHandle, createIDBEntity } from "idb-query";
+import { toDuration, calculateUrlType } from "./util";
 
-export const openIDB = async () => {
-  return await idb.openDB(DB_NAME, 1, {
-    upgrade(upgradeDb, oldVersion, newVersion, transaction) {
-      if (!upgradeDb.objectStoreNames.contains(TRACK_INFO_STORE_NAME)) {
-        const tiDb = upgradeDb.createObjectStore(TRACK_INFO_STORE_NAME, {
+export const openIDB = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    let DBOpenRequest = window.indexedDB.open(DB_NAME, 1);
+    DBOpenRequest.onerror = function (event) {
+      reject(event);
+    };
+    let db;
+    DBOpenRequest.onsuccess = function (event) {
+      db = DBOpenRequest.result;
+      resolve(db);
+    };
+    DBOpenRequest.onupgradeneeded = function (event: any) {
+      let db = event.target.result;
+      db.onerror = function (event: any) {
+        reject(event);
+      };
+      if (!db.objectStoreNames.contains(TRACK_INFO_STORE_NAME)) {
+        const tiDb = db.createObjectStore(TRACK_INFO_STORE_NAME, {
           keyPath: "id",
           autoIncrement: true,
         });
         tiDb.createIndex("url", "url", { unique: false });
         tiDb.createIndex("created", "created", { unique: false });
       }
-      if (!upgradeDb.objectStoreNames.contains(USER_LOG_STORE_NAME)) {
-        const tiDb = upgradeDb.createObjectStore(USER_LOG_STORE_NAME, {
+      if (!db.objectStoreNames.contains(USER_LOG_STORE_NAME)) {
+        const tiDb = db.createObjectStore(USER_LOG_STORE_NAME, {
           keyPath: "id",
           autoIncrement: true,
         });
         tiDb.createIndex("created", "created", { unique: false });
       }
-    },
+    };
   });
 };
 
@@ -55,6 +62,9 @@ export const UserLog = createIDBEntity<UserLogMessage, "created">(
 export const addTrackedItem = async (item: TrackInfoRecord) => {
   await TrackedRecord.create(item);
 };
+
+export const addTrackedItems = async (items: TrackInfoRecord[]) =>
+  await TrackedRecord.createMany(items);
 
 const clearStorage = async (sname: string) => {
   const ddb = await db;
@@ -168,17 +178,17 @@ export const fetchRecords = async (
 ): Promise<[TrackInfoRecord[], Date, boolean]> => {
   const startingDate =
     startingDate_ ?? (options.reversed ? new Date() : new Date(0));
-  let qry = TrackedRecord.query()
+  let qry: GroupedQuery<TrackInfoRecord> = TrackedRecord.query()
     .byIndex("created")
     .from(startingDate)
-    .groupBy((item) => {
+    .groupBy((item: any) => {
       return new Date(
         item.created.getFullYear(),
         item.created.getMonth(),
         item.created.getDate()
       ).getTime();
-    })
-    .take(options.perPage);
+    });
+  qry = qry.take(options.perPage);
   if (options.reversed) {
     qry = qry.desc();
   }
@@ -271,7 +281,9 @@ export function useCursorPaginatedController<T, C>(
       return;
     }
     setLoading(true);
+    const started = Date.now();
     const [newData, newCursor, done] = await fetchData(cursor, options);
+    const ended = Date.now();
     if (done) {
       setLoadedEverything(true);
     }
