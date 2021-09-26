@@ -61,6 +61,7 @@ import {
   DayRecord,
 } from "~/types";
 import Sentry from "~/components/ScrollSentry";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 interface HistoryCalendarProps {}
 
@@ -146,6 +147,7 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
     }
   );
   const trackedRecords = trackedRecordsP.data;
+  const loadingRecords = trackedRecordsP.loading;
   // Group records by day
   const trackedRecordsGrouped: TrackedRecordsGrouped = React.useMemo(() => {
     if (!trackedRecords || trackedRecords.length === 0) return new Map();
@@ -172,9 +174,17 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
       }, new DefaultMap<number, Day[]>(Array)),
     [allDayDates]
   );
+
   const renderedCalendar = React.useMemo(() => {
     const months = Array.from(allMonthsByYear.keys());
-    if (months.length === 0)
+    if (months.length === 0) {
+      if (loadingRecords) {
+        return (
+          <div className="w-100 h-100 f-100 df fc">
+            <CircularProgress />
+          </div>
+        );
+      }
       return (
         <div className="w-100 h-100 f-100">
           <Typography component="p" variant="subtitle1">
@@ -182,18 +192,28 @@ const HistoryCalendar = (props: HistoryCalendarProps) => {
           </Typography>
         </div>
       );
-    return months.map((monthDate: number) => {
-      const monthEntries: Day[] = allMonthsByYear.get(monthDate);
-      return (
-        <MonthGroup
-          key={monthDate}
-          monthDate={monthDate}
-          monthEntries={monthEntries}
-          trackedRecordsGrouped={trackedRecordsGrouped}
-        />
-      );
-    });
-  }, [trackedRecordsGrouped, config, allDayDates]);
+    }
+    return (
+      <>
+        {months.map((monthDate: number) => {
+          const monthEntries: Day[] = allMonthsByYear.get(monthDate);
+          return (
+            <MonthGroup
+              key={monthDate}
+              monthDate={monthDate}
+              monthEntries={monthEntries}
+              trackedRecordsGrouped={trackedRecordsGrouped}
+            />
+          );
+        })}
+        {loadingRecords && (
+          <div className="w-100 h-100 f-100 df fc pv-16">
+            <CircularProgress />
+          </div>
+        )}
+      </>
+    );
+  }, [loadingRecords, trackedRecordsGrouped, config, allDayDates]);
 
   const containerRef = React.useRef(null);
   const loadMore = React.useCallback(() => {

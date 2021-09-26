@@ -63,6 +63,10 @@ html,
   padding: 16px 0;
 }
 
+.pv-16 {
+  padding: 32px 0;
+}
+
 .pv-10 {
   padding: 20px 0;
 }
