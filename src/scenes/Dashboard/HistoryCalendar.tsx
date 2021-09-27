@@ -95,7 +95,7 @@ const MonthGroup = (props: {
   );
 };
 
-const HistoryCalendar = (props: HistoryCalendarProps) => {
+const HistoryCalendar = (_: HistoryCalendarProps) => {
   const { config } = React.useContext(AppContext);
   const trackedRecordsP = useCursorPaginatedController<TrackInfoRecord, Date>(
     fetchRecords,

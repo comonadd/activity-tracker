@@ -33,12 +33,12 @@ export const matchLocation = (
       p = loc.hash.substr(1, loc.hash.length);
     }
   }
-  for (let pair of config) {
+  for (const pair of config) {
     const r = pair[0];
     if (new RegExp(r).test(p)) {
       // matches
       const mm = p.matchAll(new RegExp(r));
-      let m = [...mm][0];
+      const m = [...mm][0];
       let params = m || [];
       delete params["index"];
       delete params["input"];

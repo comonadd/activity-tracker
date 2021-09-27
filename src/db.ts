@@ -3,15 +3,14 @@ import {
   TRACK_INFO_STORE_NAME,
   USER_LOG_STORE_NAME,
 } from "./constants";
-import React, { useEffect, useState } from "react";
-import { GroupedQuery, DbHandle, createIDBEntity } from "idb-query";
-import { calculateUrlType } from "~/configuration";
+import React from "react";
+import { DbHandle } from "idb-query";
 
 export { DbHandle, createIDBEntity } from "idb-query";
 
 export const openIDB = (): Promise<any> => {
   return new Promise((resolve, reject) => {
-    let DBOpenRequest = window.indexedDB.open(DB_NAME, 1);
+    const DBOpenRequest = window.indexedDB.open(DB_NAME, 1);
     DBOpenRequest.onerror = function (event) {
       reject(event);
     };
@@ -21,7 +20,7 @@ export const openIDB = (): Promise<any> => {
       resolve(db);
     };
     DBOpenRequest.onupgradeneeded = function (event: any) {
-      let db = event.target.result;
+      const db = event.target.result;
       db.onerror = function (event: any) {
         reject(event);
       };

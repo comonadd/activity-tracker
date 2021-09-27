@@ -1,8 +1,6 @@
 import React, { useMemo, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import {
-  calcProductivityLevelForDay,
-  rewardForActivityType,
   useExtStorage,
 } from "./util";
 import { dateToString } from "~/dates";

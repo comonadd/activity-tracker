@@ -1,25 +1,11 @@
 import React, { useContext, useMemo } from "react";
-import { DbHandle, DayRecord } from "~/types";
-import { Configuration } from "~/configuration";
 import {
   TrackInfoRecord,
-  TrackedDay,
-  TrackedRecordsGrouped,
 } from "~/trackedRecord";
-import {
-  DB_NAME,
-  TRACK_INFO_STORE_NAME,
-  ACTIVITY_UNDEFINED,
-  DEFAULT_ACTIVITY_TYPES,
-  TIME_PRECISION_POINT,
-  DEFAULT_ACTIVITY_MATCHER,
-  DEFAULT_CONFIG,
-} from "~/constants";
-import { Link, Tabs, Tab, Paper, Typography, Breadcrumbs } from "~/theme";
+
+
 import AppContext from "~/AppContext";
 import {
-  getProdPerc,
-  calcProductivityLevelForDay,
   DefaultMap,
   recordProd,
   interpRangeZero,
@@ -28,13 +14,8 @@ import {
   colorGradient,
 } from "~/util";
 import {
-  dateFormatHMS,
-  dateToString,
-  toDuration,
   Duration,
-  dateDiff,
   durAdd,
-  durationHours,
 } from "~/dates";
 import { formatDistance } from "date-fns";
 import { recDurationAtIndex } from "~/trackedRecord";

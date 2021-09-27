@@ -1,9 +1,5 @@
 import {
-  DB_NAME,
   TRACK_INFO_STORE_NAME,
-  ACTIVITY_UNDEFINED,
-  DEFAULT_ACTIVITY_TYPES,
-  DEFAULT_ACTIVITY_MATCHER,
   TIME_PRECISION_POINT,
 } from "./constants";
 import { dateDiff, Duration } from "~/dates";

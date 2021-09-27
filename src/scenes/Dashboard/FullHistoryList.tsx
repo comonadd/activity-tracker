@@ -1,74 +1,34 @@
 import React, {
-  useMemo,
   useContext,
-  createContext,
-  useState,
-  useEffect,
 } from "react";
-import ReactDOM from "react-dom";
 import {
   calcProductivityLevelForDay,
-  rewardForActivityType,
-  populateStorageWithRandomData,
-  useExtStorage,
-  LStatus,
 } from "~/util";
 import { dateFormatHMS, unixDuration, dateToString } from "~/dates";
-import {
-  DB_NAME,
-  TRACK_INFO_STORE_NAME,
-  ACTIVITY_UNDEFINED,
-  DEFAULT_ACTIVITY_TYPES,
-  DEFAULT_ACTIVITY_MATCHER,
-  DEFAULT_CONFIG,
-} from "~/constants";
-import { DbHandle, DayRecord } from "~/types";
+
+
 import { Configuration } from "~/configuration";
 import {
   TrackInfoRecord,
-  TrackedDay,
   TrackedRecordsGrouped,
   fetchRecords,
 } from "~/trackedRecord";
-import { clearTrackingStorage } from "~/activity";
-import {
-  openIDB,
-  useIndexedDbGetAllFromStore,
-  useIndexedDbGetAllFromStoreByIndex,
-  useIndexedDbHandle,
-} from "~/db";
+
+
 import { usePagedPaginatedController } from "~/hooks";
 import {
   Link,
   history,
-  Location,
-  useLocation,
-  matchLocation,
-  RouteMatcher,
-  useParams,
-  RouterContext,
-  RouteParams,
 } from "~/routeManager";
 import cn from "~/cn";
-import Page from "~/components/Page";
 import AppContext from "~/AppContext";
-import DayPage from "~/scenes/DayPage";
-import YearPage from "~/scenes/YearPage";
-import MonthPage from "~/scenes/MonthPage";
 import {
-  IconButton,
-  SettingsIcon,
   Button,
   Typography,
-  ListIcon,
-  TodayIcon,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   ExpandMoreIcon,
-  Paper,
-  Grid,
-  Breadcrumbs,
 } from "~/theme";
 
 const FullHistoryDay = (props: {

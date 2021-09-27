@@ -8,12 +8,12 @@ const Sentry = React.forwardRef(
         console.error("Couldn't get ref");
         return;
       }
-      let options = {
+      const options = {
         root: null,
         rootMargin: "0px",
         threshold: 0.5,
       } as any;
-      let observer = new IntersectionObserver((a) => {
+      const observer = new IntersectionObserver((a) => {
         const e: any = a[0];
         if (e.isIntersecting) {
           props.whenInView();
