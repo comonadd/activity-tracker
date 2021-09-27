@@ -9,7 +9,13 @@ import { recordProd } from "~/util";
 import { useLocalStorageState } from "~/hooks";
 import { addDurationToDate } from "~/dates";
 import { TIME_PRECISION_POINT } from "~/constants";
-import { Typography, Checkbox, Tooltip, DEFAULT_ACTIVITY_COLOR } from "~/theme";
+import {
+  useTheme,
+  Typography,
+  Checkbox,
+  Tooltip,
+  DEFAULT_ACTIVITY_COLOR,
+} from "~/theme";
 import { useAppConfigPart } from "~/configuration";
 
 const renderWidth = 900;
@@ -63,6 +69,7 @@ const ProdLine = (props: {
 }) => {
   const { data, x, y } = props;
   const line = useRef(null);
+  const { prodGraphFillColor } = useTheme();
   useEffect(() => {
     const lineGenerator = d3
       .line<any>()
@@ -75,7 +82,7 @@ const ProdLine = (props: {
       .curve(d3.curveBasis);
     d3.select(line.current)
       .attr("d", lineGenerator(data))
-      .attr("stroke", "#3C6E71")
+      .attr("stroke", prodGraphFillColor)
       .attr("stroke-width", strokeWidth)
       .attr("fill", "transparent");
   }, []);
@@ -107,7 +114,7 @@ const SiteGroupCols = (props: {
     .x0(function (d) {
       return x(d.x0);
     })
-    .y0(function (d) {
+    .y0(function () {
       return 0; // from the top
     })
     .y1(function (d) {

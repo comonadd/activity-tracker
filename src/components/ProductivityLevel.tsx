@@ -1,9 +1,7 @@
 import React from "react";
 import { Configuration } from "~/configuration";
 import { getProdPerc } from "~/util";
-
-const prodBarLowColor = "#e0ff4f";
-const prodBarHighColor = "#00272b";
+import { useTheme } from "~/theme";
 
 const ProductivityLevel = (props: {
   config: Configuration<any>;
@@ -12,6 +10,7 @@ const ProductivityLevel = (props: {
   const { config, level } = props;
   const prodP = getProdPerc(config, level);
   const width = 100 - prodP;
+  const { prodBarLowColor, prodBarHighColor } = useTheme();
   return (
     <div
       className="prod-level-bar"

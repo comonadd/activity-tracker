@@ -1,68 +1,24 @@
-import React, {
-  useMemo,
-  useContext,
-  createContext,
-  useState,
-  useEffect,
-} from "react";
+import React from "react";
 import ReactDOM from "react-dom";
-import {
-  calcProductivityLevelForDay,
-  rewardForActivityType,
-  populateStorageWithRandomData,
-  useExtStorage,
-  LStatus,
-} from "./util";
-import {
-  DB_NAME,
-  TRACK_INFO_STORE_NAME,
-  ACTIVITY_UNDEFINED,
-  DEFAULT_ACTIVITY_TYPES,
-  DEFAULT_ACTIVITY_MATCHER,
-  DEFAULT_CONFIG,
-} from "./constants";
-import { DbHandle, DayRecord } from "./types";
-import {
-  openIDB,
-  useIndexedDbGetAllFromStore,
-  useIndexedDbGetAllFromStoreByIndex,
-  useIndexedDbHandle,
-} from "./db";
+import { useExtStorage, LStatus } from "./util";
+import { DEFAULT_CONFIG } from "./constants";
 import "./app.css";
 import "./dashboard.css";
 import {
-  Link,
-  history,
-  Location,
   useLocation,
   matchLocation,
   RouteMatcher,
-  useParams,
   RouterContext,
   RouteParams,
 } from "./routeManager";
-import cn from "~/cn";
 import Page from "~/components/Page";
 import AppContext from "~/AppContext";
 import DayPage from "~/scenes/DayPage";
 import YearPage from "~/scenes/YearPage";
 import MonthPage from "~/scenes/MonthPage";
-import {
-  IconButton,
-  SettingsIcon,
-  Button,
-  Typography,
-  ListIcon,
-  TodayIcon,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  ExpandMoreIcon,
-  Paper,
-  Grid,
-} from "~/theme";
 import Dashboard from "~/scenes/Dashboard";
 import { Configuration } from "~/configuration";
+import { AppThemeProvider } from "~/theme";
 import "~/app.css";
 import "~/dashboard.css";
 
@@ -71,14 +27,14 @@ const NotFound = () => {
 };
 
 const routeMatcher: RouteMatcher = [
-  [/^\/$/g, (params) => <Dashboard />],
-  [/^\/(\d+)\/(\d+)\/?$/g, (params) => <YearPage />],
-  [/^\/(\d+)\/(\d+)\/?$/g, (params) => <MonthPage />],
+  [/^\/$/g, () => <Dashboard />],
+  [/^\/(\d+)\/(\d+)\/?$/g, () => <YearPage />],
+  [/^\/(\d+)\/(\d+)\/?$/g, () => <MonthPage />],
   [
     /^\/(\d+)\/(\d+)\/(\d+)\/?$/g,
     ([year, month, day]) => <DayPage year={year} month={month} day={day} />,
   ],
-  [/.*/g, (params) => <NotFound />],
+  [/.*/g, () => <NotFound />],
 ];
 
 const App = () => {
@@ -96,7 +52,9 @@ const App = () => {
   return (
     <RouterContext.Provider value={{ params: currRouteParams }}>
       <AppContext.Provider value={{ config, setConfig }}>
-        <div className="app">{componentToRender}</div>
+        <AppThemeProvider>
+          <div className="app">{componentToRender}</div>
+        </AppThemeProvider>
       </AppContext.Provider>
     </RouterContext.Provider>
   );

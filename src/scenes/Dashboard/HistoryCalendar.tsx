@@ -1,66 +1,23 @@
 import {
   calcProductivityLevelForDay,
-  rewardForActivityType,
-  populateStorageWithRandomData,
-  useExtStorage,
-  LStatus,
   DefaultMap,
   RGB,
   colorGradient,
   rgbToCSS,
 } from "~/util";
-import {
-  dateFormatHMS,
-  unixDuration,
-  dateToString,
-  monthName,
-  monthAndYear,
-} from "~/dates";
-import {
-  IconButton,
-  SettingsIcon,
-  Button,
-  Typography,
-  ListIcon,
-  TodayIcon,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  ExpandMoreIcon,
-  Paper,
-  Grid,
-  Breadcrumbs,
-} from "~/theme";
-import React, { useState } from "react";
+import { dateToString, monthName, monthAndYear } from "~/dates";
+import { Typography, Paper } from "~/theme";
+import React from "react";
 import AppContext from "~/AppContext";
-import DashboardContext from "./DashboardContext";
-import {
-  Link,
-  history,
-  Location,
-  useLocation,
-  matchLocation,
-  RouteMatcher,
-  useParams,
-  RouterContext,
-  RouteParams,
-} from "~/routeManager";
-import {
-  openIDB,
-  useIndexedDbGetAllFromStore,
-  useIndexedDbGetAllFromStoreByIndex,
-  useIndexedDbHandle,
-} from "~/db";
+import { history } from "~/routeManager";
+
 import { useCursorPaginatedController } from "~/hooks";
-import { DbHandle, DayRecord } from "~/types";
 import { Configuration } from "~/configuration";
 import {
   TrackInfoRecord,
-  TrackedDay,
   TrackedRecordsGrouped,
   fetchRecords,
 } from "~/trackedRecord";
-import { clearTrackingStorage } from "~/activity";
 import Sentry from "~/components/ScrollSentry";
 import CircularProgress from "@material-ui/core/CircularProgress";
 

@@ -20,6 +20,39 @@ export { default as Tab } from "@material-ui/core/Tab";
 export { default as Link } from "@material-ui/core/Link";
 export { default as Tooltip } from "@material-ui/core/Tooltip";
 export { default as Checkbox } from "@material-ui/core/Checkbox";
+import {
+  useTheme as useMuiTheme,
+  createTheme,
+  ThemeProvider,
+} from "@material-ui/core/styles";
+import { Theme } from "@material-ui/core/styles";
+import React from "react";
+import { Configuration } from "~/configuration";
+import AppContext from "~/AppContext";
+
+interface AppTheme extends Theme {
+  prodGraphFillColor: string;
+  prodBarLowColor: string;
+  prodBarHighColor: string;
+}
+
+export const useTheme = (): AppTheme => useMuiTheme() as any as AppTheme;
+
+const muiThemeFromConfig = (config: Configuration<any>) =>
+  createTheme({
+    palette: { primary: { main: "#ff0000" }, secondary: { main: "#00ff00" } },
+    prodGraphFillColor: "#3C6E71",
+    prodBarLowColor: "#e0ff4f",
+    prodBarHighColor: "#00272b",
+  } as any) as AppTheme;
+
+export const AppThemeProvider = (props: { children: React.ReactElement }) => {
+  const { config } = React.useContext(AppContext);
+  const theme = React.useMemo(() => {
+    return muiThemeFromConfig(config);
+  }, [config]);
+  return <ThemeProvider theme={theme}>{props.children}</ThemeProvider>;
+};
 
 // Colors
 export const DEFAULT_ACTIVITY_COLOR = "#00ff00";
