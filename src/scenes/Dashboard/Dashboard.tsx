@@ -24,6 +24,7 @@ import DashboardContext from "./DashboardContext";
 import FullHistoryList from "./FullHistoryList";
 import paths from "~/paths";
 import FileSelector from "~/components/FileSelector";
+import ConfirmDialog from "~/components/ConfirmDialog";
 
 enum Mode {
   Calendar = 0,
@@ -129,9 +130,17 @@ const Dashboard = () => {
     fr.readAsText(f);
   };
   const [populatingStorage, setPopulatingStorage] = useState(false);
+  const [clearStorageConfirmationShown, setOpenClearStorageConfirmation] =
+    useState(false);
 
   return (
     <DashboardContext.Provider value={{}}>
+      <ConfirmDialog
+        shown={clearStorageConfirmationShown}
+        onConfirm={() => clearTrackingStorage()}
+        onClose={() => setOpenClearStorageConfirmation(false)}
+        text="Do you really want to delete all of your tracked data?"
+      />
       <FileSelector onSelected={onImportData} ref={fileSelector} />
       <Page title="Activity Dashboard">
         <div className="dashboard">
@@ -194,7 +203,9 @@ const Dashboard = () => {
                         Populate storage with random data
                       </MenuItem>
                     )}
-                    <MenuItem onClick={() => clearTrackingStorage(config)}>
+                    <MenuItem
+                      onClick={() => setOpenClearStorageConfirmation(true)}
+                    >
                       Clear storage
                     </MenuItem>
                     <MenuItem onClick={exportData}>Export Data</MenuItem>

@@ -1,6 +1,5 @@
 import { TrackInfoRecord, TrackedRecord } from "~/trackedRecord";
 import { UserLogMessage, UserLog } from "~/userLog";
-import { ActTypeKey, Configuration } from "~/configuration";
 import { db } from "~/db";
 import { TRACK_INFO_STORE_NAME } from "~/constants";
 
@@ -41,8 +40,6 @@ export const clearStorage = async (sname: string) => {
   await store.clear();
 };
 
-export async function clearTrackingStorage<AK extends ActTypeKey>(
-  config: Configuration<AK>
-) {
+export async function clearTrackingStorage() {
   await clearStorage(TRACK_INFO_STORE_NAME);
 }
