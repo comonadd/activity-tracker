@@ -21,7 +21,7 @@ import { useAppConfigPart } from "~/configuration";
 const renderWidth = 900;
 const renderHeight = 500;
 const margin = { top: 10, right: 30, bottom: 30, left: 30 };
-const strokeWidth = 3;
+const strokeWidth = 1;
 
 const Axes = (props: {
   x: AxisScale<AxisDomain>;
@@ -70,7 +70,7 @@ const ProdLine = (props: {
   const { data, x, y } = props;
   const line = useRef(null);
   const { prodGraphFillColor } = useTheme();
-  useEffect(() => {
+  const rendered = useMemo(() => {
     const lineGenerator = d3
       .line<any>()
       .x(function (d) {
@@ -80,13 +80,16 @@ const ProdLine = (props: {
         return y(d.length);
       })
       .curve(d3.curveBasis);
-    d3.select(line.current)
-      .attr("d", lineGenerator(data))
-      .attr("stroke", prodGraphFillColor)
-      .attr("stroke-width", strokeWidth)
-      .attr("fill", "transparent");
-  }, []);
-  return <path ref={line} />;
+    return (
+      <path
+        d={lineGenerator(data)}
+        stroke={prodGraphFillColor}
+        strokeWidth={strokeWidth}
+        fill="none"
+      />
+    );
+  }, [data]);
+  return rendered;
 };
 
 const SiteGroupCols = (props: {
@@ -96,31 +99,39 @@ const SiteGroupCols = (props: {
   height: number;
 }) => {
   const { x, y, data, height } = props;
-  const areaGenerator = d3
-    .area<DataItem>()
-    .x(function (d) {
-      return x(d.x0);
-    })
-    .y0(function () {
-      return 0;
-    })
-    .y1(function () {
-      return height;
-    })
-    .curve(d3.curveBasis);
+  const areaGenerator = useMemo(
+    () =>
+      d3
+        .area<DataItem>()
+        .x(function (d) {
+          return x(d.x0);
+        })
+        .y0(function () {
+          return strokeWidth;
+        })
+        .y1(function () {
+          return height;
+        })
+        .curve(d3.curveBasis),
+    []
+  );
 
-  const emptyAreaGenerator = d3
-    .area<DataItem>()
-    .x0(function (d) {
-      return x(d.x0);
-    })
-    .y0(function () {
-      return 0; // from the top
-    })
-    .y1(function (d) {
-      return y(d.length); // to the start of the line
-    })
-    .curve(d3.curveBasis);
+  const emptyAreaGenerator = useMemo(
+    () =>
+      d3
+        .area<DataItem>()
+        .x0(function (d) {
+          return x(d.x0);
+        })
+        .y0(function () {
+          return 0; // from the top
+        })
+        .y1(function (d) {
+          return y(d.length); // to the start of the line
+        })
+        .curve(d3.curveBasis),
+    []
+  );
 
   const cols = useRef(null);
   const [ts, setTooltipState] = useState({
@@ -135,34 +146,37 @@ const SiteGroupCols = (props: {
   const recordColor = (record: TrackInfoRecord) =>
     activityColors[record.type] ?? DEFAULT_ACTIVITY_COLOR;
 
-  return (
-    <g ref={cols}>
-      {data.map((datum, i) => {
-        const next =
-          i !== data.length - 1 ? data[i + 1] : data[data.length - 1];
-        const xpos = x(datum.x0);
-        const ypos = y(datum.length);
-        return (
-          <path
-            key={i}
-            x={xpos}
-            y={ypos}
-            fill={recordColor(datum.rec)}
-            d={areaGenerator([data[i], next])}
-            onMouseOver={() => {
-              setTooltipState({
-                shown: true,
-                x: xpos,
-                y: height,
-                text: new URL(datum.rec.url).host,
-              });
-            }}
-            onMouseOut={() => {
-              setTooltipState({ ...ts, shown: false });
-            }}
-          />
-        );
-      })}
+  const renderedSections = useMemo(() => {
+    const filledInSections = data.map((datum, i) => {
+      const next = i !== data.length - 1 ? data[i + 1] : data[data.length - 1];
+      const xpos = x(datum.x0);
+      const ypos = y(datum.length);
+      return (
+        <path
+          key={i}
+          x={xpos}
+          y={ypos}
+          fill={recordColor(datum.rec)}
+          d={areaGenerator([data[i], next])}
+          onMouseOver={(d) => {
+            setTooltipState({
+              shown: true,
+              x: xpos,
+              y: height,
+              text: new URL(datum.rec.url).host,
+            });
+          }}
+          onMouseOut={() => {
+            setTooltipState({ ...ts, shown: false });
+          }}
+        />
+      );
+    });
+    return filledInSections;
+  }, [data, areaGenerator, ts]);
+
+  const renderedEmptyArea = useMemo(() => {
+    return (
       <path
         d={emptyAreaGenerator([
           {
@@ -184,6 +198,11 @@ const SiteGroupCols = (props: {
         ])}
         fill="#fff"
       />
+    );
+  }, [data, emptyAreaGenerator]);
+
+  const renderedTooltip = useMemo(() => {
+    return (
       <Tooltip
         title={ts.text}
         open={ts.shown}
@@ -194,6 +213,14 @@ const SiteGroupCols = (props: {
           {ts.text}
         </rect>
       </Tooltip>
+    );
+  }, [ts]);
+
+  return (
+    <g ref={cols}>
+      {renderedSections}
+      {renderedEmptyArea}
+      {renderedTooltip}
     </g>
   );
 };

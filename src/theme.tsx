@@ -40,8 +40,8 @@ export const useTheme = (): AppTheme => useMuiTheme() as any as AppTheme;
 
 const muiThemeFromConfig = (config: Configuration<any>) =>
   createTheme({
-    palette: { primary: { main: "#ff0000" }, secondary: { main: "#00ff00" } },
-    prodGraphFillColor: "#3C6E71",
+    palette: { primary: { main: "#2a9d8f" }, secondary: { main: "#e9c46a" } },
+    prodGraphFillColor: "#264653",
     prodBarLowColor: "#e0ff4f",
     prodBarHighColor: "#00272b",
   } as any) as AppTheme;
