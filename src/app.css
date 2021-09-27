@@ -22,6 +22,7 @@ html,
   background: white;
   width: 100%;
   height: 20px;
+  flex: 0 0 20px;
   border: 1px solid #eee;
   display: flex;
   flex-direction: row-reverse;
@@ -69,6 +70,10 @@ html,
 
 .pv-10 {
   padding: 20px 0;
+}
+
+.mb-2 {
+  margin-bottom: 8px;
 }
 
 .mb-4 {

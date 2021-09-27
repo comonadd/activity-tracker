@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useMemo, useEffect, useState, useContext } from "react";
 import Page from "~/components/Page";
-import { Link as RLink } from "~/routeManager";
 import { TrackInfoRecord, allRecordsForDay } from "~/trackedRecord";
-import { Link, Tabs, Tab, Typography, Breadcrumbs } from "~/theme";
+import { Tabs, Tab, Typography } from "~/theme";
 import AppContext from "~/AppContext";
 import { calcProductivityLevelForDay } from "~/util";
 import { dateToString } from "~/dates";
@@ -10,6 +9,7 @@ import ProductivityLevel from "~/components/ProductivityLevel";
 import TopSites from "./TopSites";
 import FullDayLog from "./FullDayLog";
 import DayGraph from "./DayGraph";
+import BreadcrumbsForPath from "~/components/BreadcrumbsForPath";
 
 interface DayPageProps {
   year: string;
@@ -36,12 +36,19 @@ function a11yProps(index: number) {
   };
 }
 
+const Breadcrumbs = React.memo(() => {
+  return <BreadcrumbsForPath path={[{ text: "Dashboard", path: "/" }]} />;
+});
+
 const DayPage = (props: DayPageProps) => {
   const { year, month, day } = props;
   const { config } = useContext(AppContext);
   const [records, setRecords] = useState<TrackInfoRecord[]>([]);
   const dayDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-  const prodLevel = calcProductivityLevelForDay(config, records);
+  const prodLevel = useMemo(
+    () => calcProductivityLevelForDay(config, records),
+    [config, records]
+  );
   useEffect(() => {
     (async () => {
       const res = await allRecordsForDay(dayDate);
@@ -56,19 +63,27 @@ const DayPage = (props: DayPageProps) => {
 
   return (
     <Page title={`${year}/${month}/${day}`}>
-      <Breadcrumbs aria-label="breadcrumb">
-        <Link color="inherit" to="/" component={RLink}>
-          Dashboard
-        </Link>
-      </Breadcrumbs>
-      <Typography component="h1" variant="h4">
-        {dateToString(dayDate)}
-      </Typography>
-      <ProductivityLevel level={prodLevel} config={config} />
-      <Tabs value={currTab} onChange={handleChange} aria-label="Day tabs">
-        <Tab label="Full log" {...a11yProps(0)} />
-        <Tab label="Top sites by usage" {...a11yProps(1)} />
-        <Tab label="Day graph" {...a11yProps(2)} />
+      <Breadcrumbs />
+      <div className="mb-2">
+        <Typography component="h1" variant="h4">
+          {dateToString(dayDate)}
+        </Typography>
+      </div>
+      <ProductivityLevel level={prodLevel} config={config} className="mb-2" />
+      <Tabs
+        value={currTab}
+        onChange={handleChange}
+        aria-label="Day tabs"
+        textColor="secondary"
+        indicatorColor="secondary"
+      >
+        <Tab className="day-page-tab" label="Full log" {...a11yProps(0)} />
+        <Tab
+          className="day-page-tab"
+          label="Top sites by usage"
+          {...a11yProps(1)}
+        />
+        <Tab className="day-page-tab" label="Day graph" {...a11yProps(2)} />
       </Tabs>
       <TabPanel value={currTab} index={0}>
         <FullDayLog records={records} />

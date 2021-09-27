@@ -6,6 +6,7 @@ import { useTheme } from "~/theme";
 const ProductivityLevel = (props: {
   config: Configuration<any>;
   level: number;
+  className?: string;
 }) => {
   const { config, level } = props;
   const prodP = getProdPerc(config, level);
@@ -13,7 +14,7 @@ const ProductivityLevel = (props: {
   const { prodBarLowColor, prodBarHighColor } = useTheme();
   return (
     <div
-      className="prod-level-bar"
+      className={`${props.className} prod-level-bar`}
       style={{
         background: `linear-gradient(75deg, ${prodBarLowColor}, ${prodBarHighColor}`,
       }}

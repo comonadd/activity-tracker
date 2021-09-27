@@ -98,6 +98,12 @@
 }
 
 .tab-container {
+  flex-direction: column;
+  flex: 1 1 100%;
+}
+
+.tab-container:not([hidden]) {
+  display: flex;
 }
 
 .top-sites-entry {
@@ -109,5 +115,8 @@
 }
 
 .day-graph {
-  max-width: 1200px;
+  flex: 1 1 100%;
+}
+
+.day-page-tab {
 }
