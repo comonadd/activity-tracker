@@ -102,9 +102,7 @@ export function useLocalStorageState<T>(initialValue: T): [T, (v: T) => void] {
   const [value, setValue] = useState<T>(initialValue);
   useEffect(() => {
     const stored = localStorage.getItem(key);
-    console.log(stored);
     if (stored !== undefined) {
-      console.log("setting value");
       setValue(JSON.parse(stored));
     }
   }, []);
