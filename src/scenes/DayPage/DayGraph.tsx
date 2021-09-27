@@ -15,7 +15,7 @@ import { useAppConfigPart } from "~/configuration";
 const renderWidth = 900;
 const renderHeight = 500;
 const margin = { top: 10, right: 30, bottom: 30, left: 30 };
-const strokeWidth = 1;
+const strokeWidth = 3;
 
 const Axes = (props: {
   x: AxisScale<AxisDomain>;
@@ -95,7 +95,7 @@ const SiteGroupCols = (props: {
       return x(d.x0);
     })
     .y0(function () {
-      return strokeWidth;
+      return 0;
     })
     .y1(function () {
       return height;
@@ -107,8 +107,11 @@ const SiteGroupCols = (props: {
     .x0(function (d) {
       return x(d.x0);
     })
+    .y0(function (d) {
+      return 0; // from the top
+    })
     .y1(function (d) {
-      return y(d.length);
+      return y(d.length); // to the start of the line
     })
     .curve(d3.curveBasis);
 
@@ -254,11 +257,11 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
       </div>
       <svg ref={container} viewBox={`0 0 ${renderWidth} ${renderHeight}`}>
         <g transform={`translate(${margin.left},${margin.top})`}>
-          <ProdLine x={x} y={y} data={data} />
           <Axes x={x} y={y} height={height} />
           {showGroups && (
             <SiteGroupCols x={x} y={y} data={data} height={height} />
           )}
+          <ProdLine x={x} y={y} data={data} />
         </g>
       </svg>
     </div>

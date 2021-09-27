@@ -48,7 +48,7 @@ const DayPage = (props: DayPageProps) => {
       setRecords(res);
     })();
   }, []);
-  const [currTab, setCurrTab] = React.useState<number>(0);
+  const [currTab, setCurrTab] = React.useState<number>(2);
 
   const handleChange = (event: React.SyntheticEvent<any>, newValue: number) => {
     setCurrTab(newValue);
