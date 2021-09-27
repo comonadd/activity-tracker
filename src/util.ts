@@ -1,20 +1,13 @@
 import {
-  DB_NAME,
-  TRACK_INFO_STORE_NAME,
-  ACTIVITY_UNDEFINED,
-  DEFAULT_ACTIVITY_TYPES,
-  DEFAULT_ACTIVITY_MATCHER,
-} from "./constants";
-import {
+  calculateUrlType,
   ActivityType,
-  TrackInfoRecord,
-  DbHandle,
   ActTypeKey,
   Configuration,
-} from "./types";
-import { addTrackedItems, addTrackedItem } from "./db";
-import React, { useEffect, useState } from "react";
+} from "~/configuration";
+import { TrackInfoRecord, addTrackedItems } from "./trackedRecord";
+import { useEffect, useState } from "react";
 import extAPI from "./extAPI";
+import { dateAddDays, dateAddHours } from "~/dates";
 
 const URL_SELECTION = [
   "https://news.ycombinator.com",
@@ -29,13 +22,14 @@ const URL_SELECTION = [
   "https://vc.ru",
 ];
 
-const chooseRandom = (arr: any[]) =>
-  arr[Math.round(Math.random() * (arr.length - 1))];
+export function chooseRandom<T>(arr: T[]): T {
+  return arr[Math.round(Math.random() * (arr.length - 1))];
+}
 
 const randomUrl = () => chooseRandom(URL_SELECTION);
 
 const randomUrlPath = () => {
-  let res = [""];
+  const res = [""];
   const N = Math.round(Math.random() * 5) + 3;
   for (let i = 0; i < N; ++i) {
     const partLen = Math.round(Math.random() * 5) + 3;
@@ -49,38 +43,13 @@ const randomUrlPath = () => {
   return resPath;
 };
 
-export function calculateUrlType<AK extends ActTypeKey>(
-  config: Configuration<AK>,
-  url: string
-): ActivityType {
-  const urlDomain = new URL(url).hostname;
-  const matchers = Object.keys(config.matcher);
-  let at = config.matcher[urlDomain];
-  if (at !== undefined) return at;
-  for (let matcher of matchers) {
-    if (url.includes(matcher)) {
-      at = config.matcher[matcher];
-      return at;
-    }
-  }
-  return null;
-}
-
-const dateAddDays = (d: Date, nDays: number) =>
-  new Date(d.getTime() + nDays * 24 * 60 * 60 * 1000);
-const dateAddHours = (d: Date, nHours: number) =>
-  new Date(d.getTime() + nHours * 60 * 60 * 1000);
-
 export function generateRandomRecords<AK extends ActTypeKey>(
   config: Configuration<AK>,
   nDays: number,
   nRecordsPerDay: number,
   dateStart: Date
 ): TrackInfoRecord[] {
-  let records = [];
-  const startHour = 0;
-  const endHour = 24;
-  const uds = dateStart.getTime();
+  const records = [];
   const hoursPerRecord = 24 / nRecordsPerDay;
   const dateStartDay = new Date(
     dateStart.getFullYear(),
@@ -117,7 +86,7 @@ const randomDateBetween = (start: Date, end: Date): Date => {
 
 export async function populateStorageWithRandomData<AK extends ActTypeKey>(
   config: Configuration<AK>
-) {
+): Promise<void> {
   const startDate = randomDateBetween(new Date(2000, 0, 0), new Date());
   const randomRecords = generateRandomRecords(config, 1200, 50, startDate);
   await addTrackedItems(randomRecords);
@@ -148,7 +117,7 @@ export const calcProductivityLevelForDay = (
   records: TrackInfoRecord[]
 ): number => {
   let prod = 0;
-  for (let r of records) {
+  for (const r of records) {
     const reward = rewardForActivityType(config, r.type);
     prod += reward;
   }
@@ -182,48 +151,14 @@ export function useExtStorage<T>(key: string): [T, (v: T) => void, LStatus] {
   return [data, setNewValue, status];
 }
 
-export const dateFormatHMS = (d: Date) =>
-  d.toLocaleString(navigator.language, {
-    hourCycle: "h23",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  } as any);
-
-export const unixDuration = (n: number) => {
-  let seconds = n / 1000;
-  let minutes = Math.round(seconds / 60);
-  seconds = Math.round(seconds % 60);
-  const hours = Math.round(minutes / 60);
-  minutes = Math.round(minutes % 60);
-  return `${hours} HRS, ${minutes} MINUTES`;
-};
-
-export const dateToString = (date: Date) =>
-  date.toLocaleString(navigator.language, {
-    hourCycle: "h23",
-    weekday: "short",
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-  } as any);
-
-export const monthName = (date: Date) =>
-  date.toLocaleString(navigator.language, {
-    month: "long",
-  } as any);
-
-export const monthAndYear = (date: Date) =>
-  date.toLocaleString(navigator.language, {
-    year: "numeric",
-    month: "long",
-  } as any);
-
-export const getProdPerc = (config: Configuration<any>, prod: number) => {
+export const getProdPerc = (
+  config: Configuration<any>,
+  prod: number
+): number => {
   return (prod / config.prodUpperBound) * 100;
 };
 
-export const downloadBlob = (blob: Blob, fileName: string) => {
+export const downloadBlob = (blob: Blob, fileName: string): void => {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.setAttribute("download", fileName);
@@ -252,18 +187,23 @@ export interface RGB {
   b: number;
 }
 
-export const rgbToCSS = (c: RGB) => `rgb(${c.r}, ${c.g}, ${c.b})`;
-export const colorGradient = (lowColor: RGB, highColor: RGB, pPerc: number) => {
+export const rgbToCSS = (c: RGB): string => `rgb(${c.r}, ${c.g}, ${c.b})`;
+export const colorGradient = (
+  lowColor: RGB,
+  highColor: RGB,
+  pPerc: number
+): RGB => {
   const r = lowColor.r + (highColor.r - lowColor.r) * pPerc;
   const g = lowColor.g + (highColor.g - lowColor.g) * pPerc;
   const b = lowColor.b + (highColor.b - lowColor.b) * pPerc;
   return { r, g, b };
 };
 
-export const toDuration = (dur: Date | null) =>
-  dur !== null ? dur.toISOString().substr(11, 8) : "N/A";
-
-export const interpRangeZero = (maxFrom: number, maxTo: number, v: number) => {
+export const interpRangeZero = (
+  maxFrom: number,
+  maxTo: number,
+  v: number
+): number => {
   const rangeK = maxTo / maxFrom;
   const pK = rangeK * v;
   return pK;

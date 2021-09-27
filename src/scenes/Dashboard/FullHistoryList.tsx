@@ -11,11 +11,9 @@ import {
   rewardForActivityType,
   populateStorageWithRandomData,
   useExtStorage,
-  dateFormatHMS,
-  unixDuration,
-  dateToString,
   LStatus,
 } from "~/util";
+import { dateFormatHMS, unixDuration, dateToString } from "~/dates";
 import {
   DB_NAME,
   TRACK_INFO_STORE_NAME,
@@ -24,23 +22,22 @@ import {
   DEFAULT_ACTIVITY_MATCHER,
   DEFAULT_CONFIG,
 } from "~/constants";
+import { DbHandle, DayRecord } from "~/types";
+import { Configuration } from "~/configuration";
 import {
-  DbHandle,
-  Configuration,
   TrackInfoRecord,
   TrackedDay,
   TrackedRecordsGrouped,
-  DayRecord,
-} from "~/types";
+  fetchRecords,
+} from "~/trackedRecord";
+import { clearTrackingStorage } from "~/activity";
 import {
   openIDB,
-  clearTrackingStorage,
   useIndexedDbGetAllFromStore,
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
-  fetchRecords,
-  usePagedPaginatedController,
 } from "~/db";
+import { usePagedPaginatedController } from "~/hooks";
 import {
   Link,
   history,

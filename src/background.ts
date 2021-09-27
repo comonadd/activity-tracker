@@ -1,19 +1,8 @@
-import {
-  DB_NAME,
-  TRACK_INFO_STORE_NAME,
-  ACTIVITY_UNDEFINED,
-  DEFAULT_ACTIVITY_TYPES,
-  DEFAULT_ACTIVITY_MATCHER,
-  DEFAULT_CONFIG,
-} from "./constants";
-import { calculateUrlType } from "./util";
-import {
-  UserLogMessageType,
-  saveUserLogMessage,
-  addTrackedItem,
-  openIDB,
-} from "./db";
-import { Configuration, DbHandle } from "./types";
+import { DEFAULT_CONFIG } from "./constants";
+import { Configuration, calculateUrlType } from "~/configuration";
+import { UserLogMessageType, saveUserLogMessage } from "~/userLog";
+import { addTrackedItem } from "~/trackedRecord";
+import { DbHandle, openIDB } from "./db";
 import extAPI from "./extAPI";
 
 interface TrackerState {
@@ -21,7 +10,7 @@ interface TrackerState {
   dbHandle: DbHandle;
 }
 
-let state: TrackerState = {
+const state: TrackerState = {
   config: null,
   dbHandle: null,
 };

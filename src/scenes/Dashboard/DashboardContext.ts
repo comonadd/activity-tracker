@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { TrackedRecordsGrouped } from "~/types";
+import { TrackedRecordsGrouped } from "~/trackedRecord";
 
 interface IDashboardContext {}
 

@@ -11,9 +11,6 @@ import {
   rewardForActivityType,
   populateStorageWithRandomData,
   useExtStorage,
-  dateFormatHMS,
-  unixDuration,
-  dateToString,
   LStatus,
 } from "./util";
 import {
@@ -24,17 +21,9 @@ import {
   DEFAULT_ACTIVITY_MATCHER,
   DEFAULT_CONFIG,
 } from "./constants";
-import {
-  DbHandle,
-  Configuration,
-  TrackInfoRecord,
-  TrackedDay,
-  TrackedRecordsGrouped,
-  DayRecord,
-} from "./types";
+import { DbHandle, DayRecord } from "./types";
 import {
   openIDB,
-  clearTrackingStorage,
   useIndexedDbGetAllFromStore,
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
@@ -73,6 +62,7 @@ import {
   Grid,
 } from "~/theme";
 import Dashboard from "~/scenes/Dashboard";
+import { Configuration } from "~/configuration";
 import "~/app.css";
 import "~/dashboard.css";
 

@@ -3,17 +3,19 @@ import {
   rewardForActivityType,
   populateStorageWithRandomData,
   useExtStorage,
-  dateFormatHMS,
-  unixDuration,
-  dateToString,
   LStatus,
-  monthName,
-  monthAndYear,
   DefaultMap,
   RGB,
   colorGradient,
   rgbToCSS,
 } from "~/util";
+import {
+  dateFormatHMS,
+  unixDuration,
+  dateToString,
+  monthName,
+  monthAndYear,
+} from "~/dates";
 import {
   IconButton,
   SettingsIcon,
@@ -45,21 +47,20 @@ import {
 } from "~/routeManager";
 import {
   openIDB,
-  fetchRecords,
-  clearTrackingStorage,
   useIndexedDbGetAllFromStore,
   useIndexedDbGetAllFromStoreByIndex,
   useIndexedDbHandle,
-  useCursorPaginatedController,
 } from "~/db";
+import { useCursorPaginatedController } from "~/hooks";
+import { DbHandle, DayRecord } from "~/types";
+import { Configuration } from "~/configuration";
 import {
-  DbHandle,
-  Configuration,
   TrackInfoRecord,
   TrackedDay,
   TrackedRecordsGrouped,
-  DayRecord,
-} from "~/types";
+  fetchRecords,
+} from "~/trackedRecord";
+import { clearTrackingStorage } from "~/activity";
 import Sentry from "~/components/ScrollSentry";
 import CircularProgress from "@material-ui/core/CircularProgress";
 
@@ -67,7 +68,7 @@ interface HistoryCalendarProps {}
 
 // TODO: Move this to configuration
 const lowColor: RGB = { r: 250, g: 250, b: 250 };
-const highColor: RGB = { r: 0, g: 255, b: 0 };
+const highColor: RGB = { r: 224, g: 255, b: 79 };
 const highColorBound = 255;
 const highProbBound = 1000;
 const lowProbBound = 0;

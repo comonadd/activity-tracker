@@ -2,14 +2,13 @@ import React, { useEffect, useState, useContext } from "react";
 import Page from "~/components/Page";
 import { useParams } from "~/routeManager";
 import { useIndexedDbHandle } from "~/db";
+import { DbHandle, DayRecord } from "~/types";
+import { Configuration } from "~/configuration";
 import {
-  DbHandle,
-  Configuration,
   TrackInfoRecord,
   TrackedDay,
   TrackedRecordsGrouped,
-  DayRecord,
-} from "~/types";
+} from "~/trackedRecord";
 import {
   DB_NAME,
   TRACK_INFO_STORE_NAME,

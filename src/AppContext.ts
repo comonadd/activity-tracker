@@ -1,4 +1,4 @@
-import { Configuration } from "./types";
+import { Configuration } from "~/configuration";
 import { createContext } from "react";
 
 export interface IAppContext {

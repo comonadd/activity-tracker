@@ -1,82 +1,22 @@
-import React, {
-  useMemo,
-  useContext,
-  createContext,
-  useState,
-  useEffect,
-} from "react";
-import ReactDOM from "react-dom";
+import React, { useMemo, useContext, useState } from "react";
+import { populateStorageWithRandomData, downloadBlob } from "~/util";
 import {
-  calcProductivityLevelForDay,
-  rewardForActivityType,
-  populateStorageWithRandomData,
-  useExtStorage,
-  dateFormatHMS,
-  unixDuration,
-  dateToString,
-  LStatus,
-  downloadBlob,
-} from "~/util";
-import {
-  DB_NAME,
-  TRACK_INFO_STORE_NAME,
-  ACTIVITY_UNDEFINED,
-  DEFAULT_ACTIVITY_TYPES,
-  DEFAULT_ACTIVITY_MATCHER,
-  DEFAULT_CONFIG,
-} from "~/constants";
-import {
-  DbHandle,
-  Configuration,
-  TrackInfoRecord,
-  TrackedDay,
-  TrackedRecordsGrouped,
-  DayRecord,
-} from "~/types";
-import {
-  openIDB,
   clearTrackingStorage,
-  useIndexedDbGetAllFromStore,
-  useIndexedDbGetAllFromStoreByIndex,
-  useIndexedDbHandle,
   constructExportData,
   importActivity,
   ExportImportData,
-} from "~/db";
-import {
-  Link,
-  history,
-  Location,
-  useLocation,
-  matchLocation,
-  RouteMatcher,
-  useParams,
-  RouterContext,
-  RouteParams,
-} from "~/routeManager";
-import cn from "~/cn";
+} from "~/activity";
 import Page from "~/components/Page";
 import AppContext from "~/AppContext";
-import DayPage from "~/scenes/DayPage";
-import YearPage from "~/scenes/YearPage";
-import MonthPage from "~/scenes/MonthPage";
 import {
   IconButton,
   SettingsIcon,
-  Button,
   Typography,
   ListIcon,
   TodayIcon,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  ExpandMoreIcon,
-  Paper,
   Grid,
-  Breadcrumbs,
   Menu,
   MenuItem,
-  MenuIcon,
 } from "~/theme";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import HistoryCalendar from "./HistoryCalendar";

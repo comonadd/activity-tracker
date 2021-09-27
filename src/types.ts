@@ -1,34 +1,4 @@
-import * as idb from "idb/with-async-ittr.js";
-import { IDBPDatabase } from "idb";
-
-export interface ActivityDesc {
-  description: string;
-  reward: number;
-}
-export type ActTypeKey = string;
-export type ActivityTypesMapping<AK extends ActTypeKey> = Record<
-  AK,
-  ActivityDesc
->;
-export type ActivityMatcher<AK extends ActTypeKey> = Record<string, AK>;
-export type Configuration<AK extends ActTypeKey> = {
-  // mapping from activity id to activity info
-  activityTypes: ActivityTypesMapping<AK>;
-  // mapping from regexp to activity id
-  matcher: ActivityMatcher<AK>;
-  // bounds
-  prodLowerBound: number;
-  prodUpperBound: number;
-  // urls to ignore completely
-  urlIgnorePattern: string;
-};
-export type ActivityType = string | null;
-export interface TrackInfoRecord {
-  url: string;
-  created: Date;
-  type: ActivityType;
-}
-export type DbHandle = IDBPDatabase<any>;
+export { DbHandle } from "idb-query";
 
 export interface PageInfo {
   url: string;
@@ -48,10 +18,4 @@ export interface TrackedInfo {
   timeArray: TimeArray;
 }
 
-export type TrackedDay = {
-  title: string;
-  date: number;
-  records: TrackInfoRecord[];
-};
-
-export type TrackedRecordsGrouped = Map<number, TrackInfoRecord[]>;
+export type Pair<A, B> = [A, B];

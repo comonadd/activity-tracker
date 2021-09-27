@@ -4,9 +4,9 @@ import {
   calcProductivityLevelForDay,
   rewardForActivityType,
   useExtStorage,
-  dateToString,
 } from "./util";
-import { Configuration } from "./types";
+import { dateToString } from "~/dates";
+import { Configuration } from "~/configuration";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
@@ -14,13 +14,9 @@ import TextField from "@material-ui/core/TextField";
 import "./app.css";
 import "./options.css";
 import jsonBeautify from "json-beautify";
-import {
-  UserLogMessage,
-  clearUserLogs,
-  useIndexedDbHandle,
-  UserLog,
-  recalculateRecordTypes,
-} from "./db";
+import { useIndexedDbHandle } from "./db";
+import { UserLogMessage, clearUserLogs, UserLog } from "~/userLog";
+import { recalculateRecordTypes } from "~/trackedRecord";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { Breadcrumbs, Link } from "~/theme";
