@@ -16,6 +16,10 @@ export const durationHours = (n: number): Duration => {
   return n * 60 * 60 * 1000;
 };
 
+export const durationMinutes = (n: number): Duration => {
+  return n * 60 * 1000;
+};
+
 export const dateAddDays = (d: Date, nDays: number) =>
   new Date(d.getTime() + nDays * 24 * 60 * 60 * 1000);
 
@@ -58,3 +62,6 @@ export const monthAndYear = (date: Date) =>
     year: "numeric",
     month: "long",
   } as any);
+
+export const addDurationToDate = (date: Date, dur: Duration): Date =>
+  new Date(date.getTime() + dur);

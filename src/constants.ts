@@ -3,7 +3,7 @@ import {
   ActivityMatcher,
   Configuration,
 } from "./configuration";
-import { Duration, durationHours } from "~/dates";
+import { Duration, durationMinutes } from "~/dates";
 
 export const DB_NAME = "ti-main-db";
 export const TRACK_INFO_STORE_NAME = "tracking-info";
@@ -43,4 +43,4 @@ export const DEFAULT_CONFIG: Configuration<
 };
 // How much time to assign to a record if the next record is missing and so it's impossible to
 // determine how much user spent on that site.
-export const TIME_PRECISION_POINT: Duration = durationHours(1);
+export const TIME_PRECISION_POINT: Duration = durationMinutes(10);

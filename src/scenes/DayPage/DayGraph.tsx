@@ -7,6 +7,8 @@ import { scaleLinear, scaleTime } from "d3-scale";
 import { axisBottom } from "d3-axis";
 import { axisLeft } from "d3";
 import { recordProd } from "~/util";
+import { addDurationToDate } from "~/dates";
+import { TIME_PRECISION_POINT } from "~/constants";
 
 const renderWidth = 900;
 const renderHeight = 500;
@@ -32,24 +34,40 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
     rec: TrackInfoRecord;
   }
 
-  const data: DataItem[] = useMemo(
-    () =>
-      props.records.map((r, idx) => {
-        const nextItem =
-          idx != props.records.length - 1 ? props.records[idx + 1] : null;
-        const nextCreated =
-          nextItem !== null
-            ? nextItem.created
-            : new Date(r.created.getTime() + 1000);
-        return {
-          x0: r.created,
-          x1: nextCreated,
-          length: recordProd(config, r),
-          rec: r,
-        };
-      }),
-    [props.records]
-  );
+  const data: DataItem[] = useMemo(() => {
+    if (props.records.length === 0) return [];
+    const actualData = props.records.map((r, idx) => {
+      const nextItem =
+        idx != props.records.length - 1 ? props.records[idx + 1] : null;
+      const nextCreated =
+        nextItem !== null
+          ? nextItem.created
+          : new Date(r.created.getTime() + 1000);
+      return {
+        x0: r.created,
+        x1: nextCreated,
+        length: recordProd(config, r),
+        rec: r,
+      };
+    });
+    const firstItem = actualData[0];
+    const lastItem = actualData[actualData.length - 1];
+    return [
+      {
+        x0: addDurationToDate(firstItem.x0, -TIME_PRECISION_POINT),
+        x1: firstItem.x0,
+        length: 0,
+        rec: firstItem.rec,
+      } as DataItem,
+      ...actualData,
+      {
+        x0: lastItem.x1,
+        x1: addDurationToDate(lastItem.x1, TIME_PRECISION_POINT),
+        length: 0,
+        rec: lastItem.rec,
+      } as DataItem,
+    ];
+  }, [props.records]);
   const strokeWidth = 1;
 
   useEffect(() => {
@@ -69,20 +87,9 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     const x = scaleTime().domain([dayStart, dayEnd]).range([0, width]);
 
-    const bins = data;
-
-    const [minHeight, maxHeight] = d3.extent(data, (d) => d.length);
+    const minHeight = d3.min(data, (d) => d.length);
+    const maxHeight = d3.max(data, (d) => d.length) + 20;
     const y = scaleLinear().domain([minHeight, maxHeight]).range([height, 0]);
-
-    const lineGenerator = d3
-      .line<any>()
-      .x(function (d) {
-        return x(d.x0);
-      })
-      .y(function (d) {
-        return y(d.length);
-      })
-      .curve(d3.curveBasis);
 
     const areaGenerator = d3
       .area<DataItem>()
@@ -98,10 +105,10 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
       .curve(d3.curveBasis);
 
     // by site grouping
-    for (let i = 0; i < bins.length; ++i) {
-      const next = i !== bins.length - 1 ? bins[i + 1] : bins[bins.length - 1];
+    for (let i = 0; i < data.length; ++i) {
+      const next = i !== data.length - 1 ? data[i + 1] : data[data.length - 1];
       g.append("path")
-        .data([[bins[i], next]])
+        .data([[data[i], next]])
         .attr("d", areaGenerator)
         .style("fill", (d) => {
           return recordColor(d[0].rec);
@@ -109,68 +116,54 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
         .style("opacity", 0.75);
     }
 
+    // empty area over the line
     const emptyAreaGenerator = d3
       .area<DataItem>()
-      .x(function (d) {
+      .x0(function (d) {
         return x(d.x0);
-      })
-      .y0(function () {
-        return 0;
       })
       .y1(function (d) {
         return y(d.length);
       })
       .curve(d3.curveBasis);
-
     g.append("path")
       .attr("id", "empty-area")
-      .data([[...bins]])
+      .data([
+        [
+          {
+            x0: addDurationToDate(data[0].x0, -TIME_PRECISION_POINT),
+            x1: data[0].x0,
+            length: 0,
+            rec: data[0].rec,
+          } as DataItem,
+          ...data,
+          {
+            x0: data[data.length - 1].x1,
+            x1: addDurationToDate(
+              data[data.length - 1].x1,
+              TIME_PRECISION_POINT
+            ),
+            length: 0,
+            rec: data[data.length - 1].rec,
+          } as DataItem,
+        ],
+      ])
       .attr("d", emptyAreaGenerator)
       .style("fill", "#fff");
 
-    const emptyAreaOnTheEdgesGenerator = d3
-      .area<DataItem>()
+    // line
+    const lineGenerator = d3
+      .line<any>()
       .x(function (d) {
         return x(d.x0);
       })
-      .y0(function () {
-        return 0;
+      .y(function (d) {
+        return y(d.length);
       })
-      .y1(function () {
-        return height;
-      });
-
-    const K = 500_000;
-    g.append("path")
-      .data([
-        [
-          { x0: dayStart, length: maxHeight } as any,
-          { ...bins[0], x0: new Date(bins[0].x0.getTime() + K) },
-        ],
-      ])
-      .attr("d", emptyAreaOnTheEdgesGenerator)
-      .style("fill", "#fff");
-
-    g.append("path")
-      .data([
-        [
-          {
-            x0: new Date((bins[bins.length - 1].x0 as any).getTime() - K),
-            length: maxHeight,
-          } as any,
-          {
-            x0: dayEnd,
-            length: maxHeight,
-          },
-        ],
-      ])
-      .attr("d", emptyAreaOnTheEdgesGenerator)
-      .style("fill", "#fff");
-
-    // line
+      .curve(d3.curveBasis);
     g.append("path")
       .attr("id", "the-line")
-      .attr("d", lineGenerator(bins))
+      .attr("d", lineGenerator(data))
       .attr("stroke", "#3C6E71")
       .attr("stroke-width", strokeWidth)
       .attr("fill", "transparent");
