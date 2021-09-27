@@ -25,7 +25,10 @@ module.exports = {
       {
         test: /\.tsx?$/,
         include: [path.resolve(__dirname, "src")],
-        use: "ts-loader",
+        use: {
+          loader: "ts-loader",
+          options: { configFile: DEV ? "tsconfig.dev.json" : "tsconfig.json" },
+        },
         exclude: /node_modules/,
       },
       {
@@ -41,9 +44,12 @@ module.exports = {
       "~": SRC,
     },
   },
-  devtool: "source-map", // enum
+  devtool: DEV ? "inline-source-map" : "hidden-source-map", // enum
   context: __dirname, // string (absolute path!)
   target: "web", // enum
+  optimization: {
+    minimize: !DEV,
+  },
   plugins: [
     new CopyPlugin({
       patterns: [
