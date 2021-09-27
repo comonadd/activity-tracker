@@ -104,6 +104,10 @@ html,
   justify-content: center;
 }
 
+.frr {
+  flex-direction: row-reverse;
+}
+
 .editor {
 }
 

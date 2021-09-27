@@ -18,3 +18,8 @@ export { default as MenuIcon } from "@material-ui/icons/Menu";
 export { default as Tabs } from "@material-ui/core/Tabs";
 export { default as Tab } from "@material-ui/core/Tab";
 export { default as Link } from "@material-ui/core/Link";
+export { default as Tooltip } from "@material-ui/core/Tooltip";
+export { default as Checkbox } from "@material-ui/core/Checkbox";
+
+// Colors
+export const DEFAULT_ACTIVITY_COLOR = "#00ff00";

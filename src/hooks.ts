@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useMemo, useEffect, useCallback, useState } from "react";
 
 interface PaginatedController<T> {
   data: T[];
@@ -93,4 +93,23 @@ export function useCursorPaginatedController<T, C>(
     fetchDataAndSaveCursor();
   }, [fetchDataAndSaveCursor]);
   return { data, loadMore, refresh: () => {}, loadedEverything, loading };
+}
+
+let __LS_KEY = 0;
+
+export function useLocalStorageState<T>(initialValue: T): [T, (v: T) => void] {
+  const key = useMemo(() => (__LS_KEY++).toString(), []);
+  const [value, setValue] = useState<T>(initialValue);
+  useEffect(() => {
+    const stored = localStorage.getItem(key);
+    console.log(stored);
+    if (stored !== undefined) {
+      console.log("setting value");
+      setValue(JSON.parse(stored));
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [value]);
+  return [value, setValue];
 }

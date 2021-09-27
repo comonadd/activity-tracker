@@ -1,38 +1,197 @@
-import React, { useEffect, useMemo, useContext } from "react";
+import React, { useState, useRef, useEffect, useMemo, useContext } from "react";
 import { AppContext } from "~/AppContext";
 import { TrackInfoRecord } from "~/trackedRecord";
 import * as d3 from "d3";
-import { select } from "d3-selection";
 import { scaleLinear, scaleTime } from "d3-scale";
-import { axisBottom } from "d3-axis";
+import { AxisDomain, AxisScale, axisBottom } from "d3-axis";
 import { axisLeft } from "d3";
 import { recordProd } from "~/util";
+import { useLocalStorageState } from "~/hooks";
 import { addDurationToDate } from "~/dates";
 import { TIME_PRECISION_POINT } from "~/constants";
+import { Typography, Checkbox, Tooltip, DEFAULT_ACTIVITY_COLOR } from "~/theme";
+import { useAppConfigPart } from "~/configuration";
 
 const renderWidth = 900;
 const renderHeight = 500;
 const margin = { top: 10, right: 30, bottom: 30, left: 30 };
+const strokeWidth = 1;
+
+const Axes = (props: {
+  x: AxisScale<AxisDomain>;
+  y: AxisScale<AxisDomain>;
+  height: number;
+}) => {
+  const { x, y, height } = props;
+  const axisBottomRef = useRef(null);
+  const axisLeftRef = useRef(null);
+  useEffect(() => {
+    d3.select(axisBottomRef.current).call(
+      axisBottom(x).ticks(d3.timeHour.every(1))
+    );
+    d3.select(axisLeftRef.current).call(axisLeft(y));
+  }, []);
+  return (
+    <>
+      <g
+        className="axis axis--y"
+        transform={`translate(0, 0)`}
+        ref={axisLeftRef}
+      />
+      <g
+        className="axis axis--x"
+        transform={`translate(0, ${height})`}
+        ref={axisBottomRef}
+      />
+    </>
+  );
+};
+
+interface DataItem {
+  x0: Date;
+  x1: Date;
+  length: number;
+  rec: TrackInfoRecord;
+}
+
+type Data = DataItem[];
+
+const ProdLine = (props: {
+  data: Data;
+  x: AxisScale<AxisDomain>;
+  y: AxisScale<AxisDomain>;
+}) => {
+  const { data, x, y } = props;
+  const line = useRef(null);
+  useEffect(() => {
+    const lineGenerator = d3
+      .line<any>()
+      .x(function (d) {
+        return x(d.x0);
+      })
+      .y(function (d) {
+        return y(d.length);
+      })
+      .curve(d3.curveBasis);
+    d3.select(line.current)
+      .attr("d", lineGenerator(data))
+      .attr("stroke", "#3C6E71")
+      .attr("stroke-width", strokeWidth)
+      .attr("fill", "transparent");
+  }, []);
+  return <path ref={line} />;
+};
+
+const SiteGroupCols = (props: {
+  x: AxisScale<AxisDomain>;
+  y: AxisScale<AxisDomain>;
+  data: Data;
+  height: number;
+}) => {
+  const { x, y, data, height } = props;
+  const areaGenerator = d3
+    .area<DataItem>()
+    .x(function (d) {
+      return x(d.x0);
+    })
+    .y0(function () {
+      return strokeWidth;
+    })
+    .y1(function () {
+      return height;
+    })
+    .curve(d3.curveBasis);
+
+  const emptyAreaGenerator = d3
+    .area<DataItem>()
+    .x0(function (d) {
+      return x(d.x0);
+    })
+    .y1(function (d) {
+      return y(d.length);
+    })
+    .curve(d3.curveBasis);
+
+  const cols = useRef(null);
+  const [ts, setTooltipState] = useState({
+    shown: false,
+    x: 0,
+    y: 0,
+    text: "",
+  });
+  const handleClose = () => setTooltipState({ ...ts, shown: false });
+  const handleOpen = () => setTooltipState({ ...ts, shown: true });
+  const activityColors = useAppConfigPart("activityColors");
+  const recordColor = (record: TrackInfoRecord) =>
+    activityColors[record.type] ?? DEFAULT_ACTIVITY_COLOR;
+
+  return (
+    <g ref={cols}>
+      {data.map((datum, i) => {
+        const next =
+          i !== data.length - 1 ? data[i + 1] : data[data.length - 1];
+        const xpos = x(datum.x0);
+        const ypos = y(datum.length);
+        return (
+          <path
+            key={i}
+            x={xpos}
+            y={ypos}
+            fill={recordColor(datum.rec)}
+            d={areaGenerator([data[i], next])}
+            onMouseOver={() => {
+              setTooltipState({
+                shown: true,
+                x: xpos,
+                y: height,
+                text: new URL(datum.rec.url).host,
+              });
+            }}
+            onMouseOut={() => {
+              setTooltipState({ ...ts, shown: false });
+            }}
+          />
+        );
+      })}
+      <path
+        d={emptyAreaGenerator([
+          {
+            x0: addDurationToDate(data[0].x0, -TIME_PRECISION_POINT),
+            x1: data[0].x0,
+            length: 0,
+            rec: data[0].rec,
+          } as DataItem,
+          ...data,
+          {
+            x0: data[data.length - 1].x1,
+            x1: addDurationToDate(
+              data[data.length - 1].x1,
+              TIME_PRECISION_POINT
+            ),
+            length: 0,
+            rec: data[data.length - 1].rec,
+          } as DataItem,
+        ])}
+        fill="#fff"
+      />
+      <Tooltip
+        title={ts.text}
+        open={ts.shown}
+        onClose={handleClose}
+        onOpen={handleOpen}
+      >
+        <rect x={ts.x} y={ts.y}>
+          {ts.text}
+        </rect>
+      </Tooltip>
+    </g>
+  );
+};
 
 const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
   const { config } = useContext(AppContext);
   const { dayDate } = props;
   const container = React.useRef(null);
-  // TODO: Move to configuration
-  const stc = {
-    workRelated: "#840032",
-    porn: "#E59500",
-    reading: "#02040F",
-    dumbEntertainment: "#E5DADA",
-  };
-  const recordColor = (record: TrackInfoRecord) => (stc as any)[record.type];
-
-  interface DataItem {
-    x0: Date;
-    x1: Date;
-    length: number;
-    rec: TrackInfoRecord;
-  }
 
   const data: DataItem[] = useMemo(() => {
     if (props.records.length === 0) return [];
@@ -68,122 +227,40 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
       } as DataItem,
     ];
   }, [props.records]);
-  const strokeWidth = 1;
 
-  useEffect(() => {
-    if (!container.current) return;
-    if (data.length === 0) return;
+  const dayStart = dayDate;
+  const dayEnd = new Date(dayDate.getTime() + 24 * 60 * 60 * 1000);
+  const width = renderWidth - margin.left - margin.right;
+  const height = renderHeight - margin.top - margin.bottom;
+  const minHeight = d3.min(data, (d) => d.length);
+  const maxHeight = d3.max(data, (d) => d.length) + 20;
+  const x = scaleTime().domain([dayStart, dayEnd]).range([0, width]);
+  const y = scaleLinear().domain([minHeight, maxHeight]).range([height, 0]);
 
-    const dayStart = dayDate;
-    const dayEnd = new Date(dayDate.getTime() + 24 * 60 * 60 * 1000);
+  const [showGroups, setShowGroups] = useLocalStorageState(false);
 
-    const hist = select(container.current);
-    hist.selectAll("*").remove();
-
-    const width = renderWidth - margin.left - margin.right;
-    const height = renderHeight - margin.top - margin.bottom;
-    const g = hist
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    const x = scaleTime().domain([dayStart, dayEnd]).range([0, width]);
-
-    const minHeight = d3.min(data, (d) => d.length);
-    const maxHeight = d3.max(data, (d) => d.length) + 20;
-    const y = scaleLinear().domain([minHeight, maxHeight]).range([height, 0]);
-
-    const areaGenerator = d3
-      .area<DataItem>()
-      .x(function (d) {
-        return x(d.x0);
-      })
-      .y0(function () {
-        return strokeWidth;
-      })
-      .y1(function () {
-        return height;
-      })
-      .curve(d3.curveBasis);
-
-    // by site grouping
-    for (let i = 0; i < data.length; ++i) {
-      const next = i !== data.length - 1 ? data[i + 1] : data[data.length - 1];
-      g.append("path")
-        .data([[data[i], next]])
-        .attr("d", areaGenerator)
-        .style("fill", (d) => {
-          return recordColor(d[0].rec);
-        })
-        .style("opacity", 0.75);
-    }
-
-    // empty area over the line
-    const emptyAreaGenerator = d3
-      .area<DataItem>()
-      .x0(function (d) {
-        return x(d.x0);
-      })
-      .y1(function (d) {
-        return y(d.length);
-      })
-      .curve(d3.curveBasis);
-    g.append("path")
-      .attr("id", "empty-area")
-      .data([
-        [
-          {
-            x0: addDurationToDate(data[0].x0, -TIME_PRECISION_POINT),
-            x1: data[0].x0,
-            length: 0,
-            rec: data[0].rec,
-          } as DataItem,
-          ...data,
-          {
-            x0: data[data.length - 1].x1,
-            x1: addDurationToDate(
-              data[data.length - 1].x1,
-              TIME_PRECISION_POINT
-            ),
-            length: 0,
-            rec: data[data.length - 1].rec,
-          } as DataItem,
-        ],
-      ])
-      .attr("d", emptyAreaGenerator)
-      .style("fill", "#fff");
-
-    // line
-    const lineGenerator = d3
-      .line<any>()
-      .x(function (d) {
-        return x(d.x0);
-      })
-      .y(function (d) {
-        return y(d.length);
-      })
-      .curve(d3.curveBasis);
-    g.append("path")
-      .attr("id", "the-line")
-      .attr("d", lineGenerator(data))
-      .attr("stroke", "#3C6E71")
-      .attr("stroke-width", strokeWidth)
-      .attr("fill", "transparent");
-
-    // x axis
-    g.append("g")
-      .attr("class", "axis axis--x")
-      .attr("transform", `translate(0, ${height})`)
-      .call(axisBottom(x).ticks(d3.timeHour.every(1)));
-
-    // y axis
-    g.append("g")
-      .attr("class", "axis axis--y")
-      .attr("transform", `translate(0, 0)`)
-      .call(axisLeft(y));
-  }, [data]);
+  if (data.length === 0) return null;
 
   return (
     <div className="day-graph">
-      <svg ref={container} viewBox={`0 0 ${renderWidth} ${renderHeight}`}></svg>
+      <div className="df frr w-100">
+        <div className="df fcv">
+          <Typography variant="subtitle2">Show groups</Typography>
+          <Checkbox
+            checked={showGroups}
+            onChange={(e) => setShowGroups(e.target.checked)}
+          />
+        </div>
+      </div>
+      <svg ref={container} viewBox={`0 0 ${renderWidth} ${renderHeight}`}>
+        <g transform={`translate(${margin.left},${margin.top})`}>
+          <ProdLine x={x} y={y} data={data} />
+          <Axes x={x} y={y} height={height} />
+          {showGroups && (
+            <SiteGroupCols x={x} y={y} data={data} height={height} />
+          )}
+        </g>
+      </svg>
     </div>
   );
 };

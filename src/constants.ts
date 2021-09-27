@@ -40,6 +40,11 @@ export const DEFAULT_CONFIG: Configuration<
   prodUpperBound: 1000,
   urlIgnorePattern:
     "(chrome://.*|chrome-extension:.*|moz-extension://.*|about:.*)",
+  activityColors: {
+    workRelated: "#840032",
+    dumbEntertainment: "#E5DADA",
+    properEntertainment: "#ff0000",
+  },
 };
 // How much time to assign to a record if the next record is missing and so it's impossible to
 // determine how much user spent on that site.
