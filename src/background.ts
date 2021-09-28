@@ -74,6 +74,10 @@ const setup = async () => {
     }
   );
   extAPI.tabs.onUpdated.addListener(tabListener);
+
+  extAPI.browserAction.onClicked.addListener(function (tab) {
+    extAPI.tabs.create({ url: extAPI.runtime.getURL("./dashboard.html") });
+  });
 };
 
 setup();

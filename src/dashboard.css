@@ -1,3 +1,10 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  height: 100%;
+}
+
 .day {
   margin-bottom: 8px;
 }
@@ -55,6 +62,16 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.full-history {
+  display: flex;
+  flex-direction: column;
+}
+
+.full-history-pagination {
+  box-sizing: border-box;
+  flex: 0 0 80px;
 }
 
 .cal-month-group__title {

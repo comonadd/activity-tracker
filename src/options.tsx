@@ -1,8 +1,6 @@
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useContext, useMemo, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
-import {
-  useExtStorage,
-} from "./util";
+import { useExtStorage } from "./util";
 import { dateToString } from "~/dates";
 import { Configuration } from "~/configuration";
 import Button from "@material-ui/core/Button";
@@ -12,19 +10,17 @@ import TextField from "@material-ui/core/TextField";
 import "./app.css";
 import "./options.css";
 import jsonBeautify from "json-beautify";
-import { useIndexedDbHandle } from "./db";
 import { UserLogMessage, clearUserLogs, UserLog } from "~/userLog";
 import { recalculateRecordTypes } from "~/trackedRecord";
 import FormHelperText from "@material-ui/core/FormHelperText";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import { Breadcrumbs, Link } from "~/theme";
 import paths from "~/paths";
+import AppContext from "~/AppContext";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import { Link, Breadcrumbs } from "~/theme";
 
-const logsPerPage = 20;
-
-const OptionsPage = () => {
-  const [config, setConfig] =
-    useExtStorage<Configuration<any>>("tracker-config");
+const ConfigEditor = () => {
+  const { config, setConfig } = useContext(AppContext);
+  const [error, setError] = useState(null);
   const [initialConfigS, setInitialConfigS] = useState<string>("");
   const [configS, setConfigS] = useState<string>("");
   useEffect(() => {
@@ -32,7 +28,7 @@ const OptionsPage = () => {
     setInitialConfigS(jsonS);
     setConfigS(jsonS);
   }, [config]);
-  const [error, setError] = useState(null);
+
   const [saving, setSaving] = useState(false);
   const [savingStep, setSavingStep] = useState<string | null>(null);
   const [totalRecordsToProcess, setTotalRecordsToProcess] =
@@ -41,8 +37,9 @@ const OptionsPage = () => {
   const recalc = async () => {
     setSaving(true);
     let k = 0;
-    const UI_UPDATE_INTERVAL = 100;
-    for await (const [processed, total] of recalculateRecordTypes(config)) {
+    const UI_UPDATE_INTERVAL = 250;
+    const it = recalculateRecordTypes(config);
+    for await (const [processed, total] of it) {
       if (k >= UI_UPDATE_INTERVAL) {
         setTotalRecordsToProcess(total);
         setProcessedRecords(processed);
@@ -71,7 +68,82 @@ const OptionsPage = () => {
     }
   };
 
-  const db = useIndexedDbHandle();
+  const didSomethingChange = React.useMemo(
+    () => initialConfigS !== configS,
+    [initialConfigS, configS]
+  );
+
+  const renderedHeader = useMemo(() => {
+    const processedRecordsPerc =
+      totalRecordsToProcess === -1
+        ? -1
+        : Math.round((processedRecords / totalRecordsToProcess) * 100);
+    return (
+      <header className="pv-2">
+        <div className="df fsb fcv">
+          <div className="df">
+            <Typography component="h1" variant="h5">
+              Config editor
+            </Typography>
+          </div>
+          <div className="editor-controls">
+            <Button
+              color="primary"
+              onClick={save}
+              disabled={saving || !didSomethingChange}
+            >
+              <span>Save configuration</span>
+            </Button>
+          </div>
+        </div>
+        {saving && (
+          <div className="df fcv mt-1">
+            {processedRecordsPerc !== -1 && (
+              <CircularProgress
+                variant="determinate"
+                size={24}
+                thickness={4}
+                value={processedRecordsPerc}
+              />
+            )}
+            <span className="ml-4 fs-14">
+              {savingStep !== null ? savingStep : "Saving..."}
+            </span>
+          </div>
+        )}
+      </header>
+    );
+  }, [
+    totalRecordsToProcess,
+    processedRecords,
+    saving,
+    savingStep,
+    didSomethingChange,
+  ]);
+
+  return (
+    <div className="config-editor mb-4">
+      {renderedHeader}
+      {error !== null && <FormHelperText error>{error.message}</FormHelperText>}
+      <TextField
+        spellCheck={false}
+        className="editor"
+        multiline
+        fullWidth
+        value={configS}
+        onChange={(e) => setConfigS(e.target.value)}
+        variant="outlined"
+        inputProps={{
+          className: "editor-textarea",
+        }}
+      />
+    </div>
+  );
+};
+
+const logsPerPage = 20;
+
+const LogsDisplay = () => {
   const [logs, setLogs] = useState<UserLogMessage[]>([]);
   const fetchLogs = async (timestamp: Date) => {
     const result = await UserLog.query()
@@ -88,8 +160,7 @@ const OptionsPage = () => {
 
   const clearLogs = () => {
     (async () => {
-      await clearUserLogs(db);
-      const lastLogTimestamp = logs[logs.length - 1].created;
+      await clearUserLogs();
       setLogs([]);
     })();
   };
@@ -109,91 +180,40 @@ const OptionsPage = () => {
     });
   }, [logs]);
 
-  const didSomethingChange = React.useMemo(
-    () => initialConfigS !== configS,
-    [initialConfigS, configS]
-  );
-
-  const processedRecordsPerc =
-    totalRecordsToProcess === -1
-      ? -1
-      : Math.round((processedRecords / totalRecordsToProcess) * 100);
-
   return (
-    <div className="config-page">
-      <Breadcrumbs aria-label="breadcrumb">
-        <Link color="inherit" href={paths.DASHBOARD_PAGE}>
-          Dashboard
-        </Link>
-      </Breadcrumbs>
-      <div className="config-editor mb-4">
-        <header className="pv-2">
-          <div className="df fsb fcv">
-            <div className="df">
-              <Typography component="h1" variant="h5">
-                Config editor
-              </Typography>
-            </div>
-            <div className="editor-controls">
-              <Button
-                color="primary"
-                onClick={save}
-                disabled={saving || !didSomethingChange}
-              >
-                <span>Save configuration</span>
-              </Button>
-            </div>
+    <div className="logs">
+      <Grid container>
+        <Grid item xs={12}>
+          <div className="df fsb fcv pv-2">
+            <Typography component="h1" variant="h5">
+              Logs
+            </Typography>
+            <Button color="secondary" onClick={clearLogs}>
+              Clear Logs
+            </Button>
           </div>
-          {saving && (
-            <div className="df fcv mt-1">
-              {processedRecordsPerc !== -1 && (
-                <CircularProgress
-                  variant="determinate"
-                  size={24}
-                  thickness={4}
-                  value={processedRecordsPerc}
-                />
-              )}
-              <span className="ml-4 fs-14">
-                {savingStep !== null ? savingStep : "Saving..."}
-              </span>
-            </div>
-          )}
-        </header>
-        {error !== null && (
-          <FormHelperText error>{error.message}</FormHelperText>
-        )}
-        <TextField
-          spellCheck={false}
-          className="editor"
-          multiline
-          fullWidth
-          value={configS}
-          onChange={(e) => setConfigS(e.target.value)}
-          variant="outlined"
-          inputProps={{
-            className: "editor-textarea",
-          }}
-        />
-      </div>
-      <div className="logs">
-        <Grid container>
-          <Grid item xs={12}>
-            <div className="df fsb fcv pv-2">
-              <Typography component="h1" variant="h5">
-                Logs
-              </Typography>
-              <Button color="secondary" onClick={clearLogs}>
-                Clear Logs
-              </Button>
-            </div>
-          </Grid>
-          <Grid item xs={12}>
-            <div className="logs-list">{logsRendered}</div>
-          </Grid>
         </Grid>
-      </div>
+        <Grid item xs={12}>
+          <div className="logs-list">{logsRendered}</div>
+        </Grid>
+      </Grid>
     </div>
+  );
+};
+
+const OptionsPage = () => {
+  const [config, setConfig] =
+    useExtStorage<Configuration<any>>("tracker-config");
+  return (
+    <AppContext.Provider value={{ config, setConfig }}>
+      <div className="config-page">
+        <Breadcrumbs aria-label="breadcrumb">
+          <Link href={paths.DASHBOARD_PAGE}>Dashboard</Link>
+        </Breadcrumbs>
+        <ConfigEditor />
+        <LogsDisplay />
+      </div>
+    </AppContext.Provider>
   );
 };
 

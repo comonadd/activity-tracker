@@ -1,35 +1,18 @@
-import React, {
-  useContext,
-} from "react";
-import {
-  calcProductivityLevelForDay,
-} from "~/util";
-import { dateFormatHMS, unixDuration, dateToString } from "~/dates";
-
-
+import React, { useMemo, useContext } from "react";
+import { calcProductivityLevelForDay } from "~/util";
+import { unixDuration, dateToString } from "~/dates";
 import { Configuration } from "~/configuration";
 import {
   TrackInfoRecord,
   TrackedRecordsGrouped,
-  fetchRecords,
+  trackedRecordFetcher,
 } from "~/trackedRecord";
-
-
+import CircularProgress from "@material-ui/core/CircularProgress";
 import { usePagedPaginatedController } from "~/hooks";
-import {
-  Link,
-  history,
-} from "~/routeManager";
-import cn from "~/cn";
+import { history } from "~/routeManager";
 import AppContext from "~/AppContext";
-import {
-  Button,
-  Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  ExpandMoreIcon,
-} from "~/theme";
+import { Grid, Card, CardContent, Button, Typography } from "~/theme";
+import Pagination from "~/components/Pagination";
 
 const FullHistoryDay = (props: {
   config: Configuration<any>;
@@ -43,24 +26,25 @@ const FullHistoryDay = (props: {
     records.length !== 0 ? records[records.length - 1].created : new Date();
   const dayDuration = maxTimestamp.getTime() - minTimestamp.getTime();
   const productivityLevel = calcProductivityLevelForDay(config, records);
+  const prodPerc = Math.round(
+    (productivityLevel / config.prodUpperBound) * 100
+  );
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
   return (
-    <Accordion className="day">
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        aria-controls="day-full-content"
-        id="day-full-header"
-      >
-        <div className="day-header">
-          <div className="day-header__left">
-            <Typography className="day__title" title={date.toString()}>
-              <b>{dateToString(date)}</b>
+    <Card elevation={2}>
+      <CardContent>
+        <Grid container spacing={1}>
+          <Grid item xs={10}>
+            <Typography component="div" variant="h5">
+              {dateToString(date)}
             </Typography>
-            <Typography>{unixDuration(dayDuration)}</Typography>
-            <Typography>Productivity: {productivityLevel}</Typography>
-            <Link to={`/${year}/${month}/${day}`}>Details</Link>
+            <Typography variant="subtitle2" component="div">
+              {`${prodPerc}% ${unixDuration(dayDuration)}`}
+            </Typography>
+          </Grid>
+          <Grid item xs={2} className="df fcv frr">
             <Button
               onClick={() => {
                 history.push(`/${year}/${month}/${day}`);
@@ -71,58 +55,19 @@ const FullHistoryDay = (props: {
             >
               Details
             </Button>
-          </div>
-        </div>
-      </AccordionSummary>
-      <AccordionDetails>
-        <div className="day-detailed-info">
-          <div className="day-detailed-info__header">
-            <Typography>
-              Start: {dateFormatHMS(new Date(minTimestamp))}
-            </Typography>
-            <Typography>
-              End: {dateFormatHMS(new Date(maxTimestamp))}
-            </Typography>
-          </div>
-          <div className="day__records">
-            {records.map(
-              ({ url, created, type }: TrackInfoRecord, idx: number) => {
-                const date = created;
-                const isTypeDefined = type !== null;
-                const dateStart = new Date(date);
-                const timeS = date.toLocaleString(navigator.language, {
-                  hourCycle: "h23",
-                  //year: "4-digit",
-                  //day: "2-digit",
-                  //hour: "2-digit",
-                  //minute: "2-digit",
-                } as any);
-                const c = cn({
-                  "day-record": true,
-                  "day-record_type-not-defined": !isTypeDefined,
-                });
-                return (
-                  <div key={idx} className={c}>
-                    <span className="day-record__time">{timeS}</span>
-                    <span className="day-record__url">{url}</span>
-                  </div>
-                );
-              }
-            )}
-          </div>
-        </div>
-      </AccordionDetails>
-    </Accordion>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
   );
 };
 
 const FullHistoryList = () => {
   const { config } = useContext(AppContext);
-  const trackedRecordsP = usePagedPaginatedController<TrackInfoRecord, Date>(
-    fetchRecords,
+  const trackedRecordsP = usePagedPaginatedController<TrackInfoRecord>(
+    trackedRecordFetcher,
     {
-      reversed: true,
-      perPage: 10,
+      perPage: 7,
     }
   );
   const trackedRecords = trackedRecordsP.data;
@@ -141,20 +86,59 @@ const FullHistoryList = () => {
       return a - b;
     }
   );
+
+  const renderedItems = useMemo(() => {
+    return (
+      <div className="f-100">
+        {trackedRecordsP.loading ? (
+          <div className="w-100 h-100 f-100 df fc">
+            <CircularProgress />
+          </div>
+        ) : allDayDates.length === 0 ? (
+          <div className="w-100 h-100 f-100">
+            <Typography component="p" variant="subtitle1">
+              No tracked records found
+            </Typography>
+          </div>
+        ) : (
+          <Grid container spacing={1} className="pv-8 ph-2">
+            {allDayDates.map((d) => {
+              const records = trackedRecordsGrouped.get(d);
+              const day = new Date(d);
+              return (
+                <Grid item xs={12} key={d}>
+                  <FullHistoryDay
+                    config={config}
+                    key={d}
+                    date={day}
+                    records={records}
+                  />
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
+      </div>
+    );
+  }, [
+    trackedRecordsGrouped,
+    trackedRecordsP.loading,
+    trackedRecordsP.totalPages,
+  ]);
+
   return (
-    <div className="full-history">
-      {allDayDates.map((d) => {
-        const records = trackedRecordsGrouped.get(d);
-        const day = new Date(d);
-        return (
-          <FullHistoryDay
-            config={config}
-            key={d}
-            date={day}
-            records={records}
-          />
-        );
-      })}
+    <div className="full-history w-100 h-100 df f-100">
+      {renderedItems}
+      <div className="full-history-pagination df pv-8">
+        <Pagination
+          count={trackedRecordsP.totalPages}
+          current={trackedRecordsP.currentPage}
+          radius={3}
+          onChange={(n) => {
+            trackedRecordsP.loadPage(n);
+          }}
+        />
+      </div>
     </div>
   );
 };

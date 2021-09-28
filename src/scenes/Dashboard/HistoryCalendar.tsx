@@ -16,7 +16,7 @@ import { Configuration } from "~/configuration";
 import {
   TrackInfoRecord,
   TrackedRecordsGrouped,
-  fetchRecords,
+  trackedRecordFetcher,
 } from "~/trackedRecord";
 import Sentry from "~/components/ScrollSentry";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -98,7 +98,7 @@ const MonthGroup = (props: {
 const HistoryCalendar = (_: HistoryCalendarProps) => {
   const { config } = React.useContext(AppContext);
   const trackedRecordsP = useCursorPaginatedController<TrackInfoRecord, Date>(
-    fetchRecords,
+    trackedRecordFetcher,
     {
       reversed: true,
       perPage: 30,
@@ -173,7 +173,6 @@ const HistoryCalendar = (_: HistoryCalendarProps) => {
     );
   }, [loadingRecords, trackedRecordsGrouped, config, allDayDates]);
 
-  const containerRef = React.useRef(null);
   const loadMore = React.useCallback(() => {
     if (trackedRecordsP.loading) {
       return;
@@ -186,9 +185,9 @@ const HistoryCalendar = (_: HistoryCalendarProps) => {
     })();
   }, [trackedRecordsP]);
   return (
-    <div className="full-history-calendar" ref={containerRef}>
+    <div className="full-history-calendar">
       <div className="full-history-calendar-items">{renderedCalendar}</div>
-      <Sentry whenInView={loadMore} ref={containerRef} />
+      <Sentry whenInView={loadMore} />
     </div>
   );
 };

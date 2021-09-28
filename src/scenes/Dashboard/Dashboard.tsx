@@ -25,6 +25,7 @@ import FullHistoryList from "./FullHistoryList";
 import paths from "~/paths";
 import FileSelector from "~/components/FileSelector";
 import ConfirmDialog from "~/components/ConfirmDialog";
+import { useLocalStorageState } from "~/hooks";
 
 enum Mode {
   Calendar = 0,
@@ -54,8 +55,11 @@ const iconForMode = (viewingMode: Mode) => {
 };
 
 const Dashboard = () => {
-  const { config, setConfig } = useContext(AppContext);
-  const [viewingMode, setViewingMode] = useState<Mode>(Mode.Calendar);
+  const { config } = useContext(AppContext);
+  const [viewingMode, setViewingMode] = useLocalStorageState<Mode>(
+    "viewing-mode",
+    Mode.Calendar
+  );
   const viewingModeIcon = useMemo(
     () => iconForMode(viewingMode),
     [viewingMode]

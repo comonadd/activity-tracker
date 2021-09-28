@@ -16,6 +16,7 @@ html,
   height: 100%;
   padding: 0;
   margin: 0;
+  overflow-x: hidden;
 }
 
 .prod-level-bar {
@@ -64,6 +65,11 @@ html,
   padding: 16px 0;
 }
 
+.ph-2 {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
 .pv-16 {
   padding: 32px 0;
 }
@@ -82,6 +88,11 @@ html,
 
 .mt-1 {
   margin-top: 2px;
+}
+
+.mh-8 {
+  margin-right: 16px;
+  margin-left: 16px;
 }
 
 .page {
@@ -129,4 +140,8 @@ html,
 
 .ml-4 {
   margin-left: 8px;
+}
+
+.fdc {
+  flex-direction: column;
 }

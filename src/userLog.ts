@@ -27,7 +27,7 @@ export const saveUserLogMessage = async (
   await tx.store.put({ ...msg, created: new Date() });
 };
 
-export const clearUserLogs = async (db: DbHandle) => {
-  const tx = db.transaction(USER_LOG_STORE_NAME, "readwrite");
+export const clearUserLogs = async () => {
+  const tx = (await db).transaction(USER_LOG_STORE_NAME, "readwrite");
   await tx.store.clear();
 };

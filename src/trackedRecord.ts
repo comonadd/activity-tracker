@@ -1,7 +1,4 @@
-import {
-  TRACK_INFO_STORE_NAME,
-  TIME_PRECISION_POINT,
-} from "./constants";
+import { TRACK_INFO_STORE_NAME, TIME_PRECISION_POINT } from "./constants";
 import { dateDiff, Duration } from "~/dates";
 import { Pair } from "~/types";
 import { calculateUrlType, ActivityType, Configuration } from "~/configuration";
@@ -71,42 +68,81 @@ export const allRecordsForDay = async (
   return getRecordsInRange(db, fromDate, toDate);
 };
 
-type CT = Date;
-
-export const fetchRecords = async (
-  startingDate_: Date,
-  options: {
-    perPage: number;
-    reversed: boolean;
-  }
-): Promise<[TrackInfoRecord[], Date, boolean]> => {
-  const startingDate =
-    startingDate_ ?? (options.reversed ? new Date() : new Date(0));
-  let qry = TrackedRecord.query()
-    .byIndex("created")
-    .from(startingDate)
-    .groupBy((item: any) => {
-      return new Date(
-        item.created.getFullYear(),
-        item.created.getMonth(),
-        item.created.getDate()
-      ).getTime();
-    });
-  qry = qry.take(options.perPage);
-  if (options.reversed) {
-    qry = qry.desc();
-  }
-  const res: Map<any, any> = await qry.all();
-  const data = Array.from(res.entries()).reduce((acc, ti) => {
-    for (const item of ti[1]) {
-      acc.push(item);
+export const trackedRecordFetcher = {
+  async fetchWithCursor(
+    startingDate_: Date,
+    options: {
+      perPage: number;
+      reversed: boolean;
     }
-    return acc;
-  }, []);
-  const nextCursor =
-    data.length !== 0 ? data[data.length - 1].created : startingDate;
-  const done = nextCursor.getTime() === startingDate.getTime();
-  return [data, nextCursor, done];
+  ): Promise<[TrackInfoRecord[], Date, boolean]> {
+    const startingDate =
+      startingDate_ ?? (options.reversed ? new Date() : new Date(0));
+    let qry = TrackedRecord.query()
+      .byIndex("created")
+      .from(startingDate)
+      .groupBy((item: any) => {
+        return new Date(
+          item.created.getFullYear(),
+          item.created.getMonth(),
+          item.created.getDate()
+        ).getTime();
+      });
+    qry = qry.take(options.perPage);
+    if (options.reversed) {
+      qry = qry.desc();
+    }
+    const res: Map<any, any> = await qry.all();
+    const data = Array.from(res.entries()).reduce((acc, ti) => {
+      for (const item of ti[1]) {
+        acc.push(item);
+      }
+      return acc;
+    }, []);
+    const nextCursor =
+      data.length !== 0 ? data[data.length - 1].created : startingDate;
+    const done = nextCursor.getTime() === startingDate.getTime();
+    return [data, nextCursor, done];
+  },
+
+  async fetchTotalPages(options: { perPage: number }) {
+    const totalRecords = await TrackedRecord.query().byIndex("id").count();
+    const pages = Math.ceil(totalRecords / options.perPage);
+    return pages;
+  },
+
+  async fetchByPage(
+    pageNum: number,
+    options: {
+      perPage: number;
+      reversed: boolean;
+    }
+  ): Promise<TrackInfoRecord[]> {
+    const offset = pageNum * options.perPage;
+    let qry = TrackedRecord.query()
+      .byIndex("id")
+      .from(offset)
+      .groupBy((item: any) => {
+        return new Date(
+          item.created.getFullYear(),
+          item.created.getMonth(),
+          item.created.getDate()
+        ).getTime();
+      })
+      .take(options.perPage);
+    if (options.reversed) {
+      qry = qry.desc();
+    }
+    const res: Map<any, any> = await qry.all();
+    const data = Array.from(res.entries()).reduce((acc, ti) => {
+      for (const item of ti[1]) {
+        acc.push(item);
+      }
+      return acc;
+    }, []);
+    console.log(data.length);
+    return data;
+  },
 };
 
 export const recalculateRecordTypes = async function* (
@@ -115,11 +151,16 @@ export const recalculateRecordTypes = async function* (
   const allRecords = await TrackedRecord.query().all();
   const totalRecords = allRecords.length;
   let processed = 0;
+  const tx = await TrackedRecord.createTransaction("readwrite");
   for (const rec of allRecords) {
-    await TrackedRecord.replace(rec.created, {
-      ...rec,
-      type: calculateUrlType(config, rec.url),
-    });
+    await TrackedRecord.replace(
+      rec.created,
+      {
+        ...rec,
+        type: calculateUrlType(config, rec.url),
+      },
+      tx
+    );
     ++processed;
     yield [processed, totalRecords];
   }

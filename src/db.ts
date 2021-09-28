@@ -10,7 +10,7 @@ export { DbHandle, createIDBEntity } from "idb-query";
 
 export const openIDB = (): Promise<any> => {
   return new Promise((resolve, reject) => {
-    const DBOpenRequest = window.indexedDB.open(DB_NAME, 1);
+    const DBOpenRequest = window.indexedDB.open(DB_NAME, 3);
     DBOpenRequest.onerror = function (event) {
       reject(event);
     };
@@ -24,21 +24,18 @@ export const openIDB = (): Promise<any> => {
       db.onerror = function (event: any) {
         reject(event);
       };
-      if (!db.objectStoreNames.contains(TRACK_INFO_STORE_NAME)) {
-        const tiDb = db.createObjectStore(TRACK_INFO_STORE_NAME, {
-          keyPath: "id",
-          autoIncrement: true,
-        });
-        tiDb.createIndex("url", "url", { unique: false });
-        tiDb.createIndex("created", "created", { unique: false });
-      }
-      if (!db.objectStoreNames.contains(USER_LOG_STORE_NAME)) {
-        const tiDb = db.createObjectStore(USER_LOG_STORE_NAME, {
-          keyPath: "id",
-          autoIncrement: true,
-        });
-        tiDb.createIndex("created", "created", { unique: false });
-      }
+      const tiDb = db.createObjectStore(TRACK_INFO_STORE_NAME, {
+        keyPath: "id",
+        autoIncrement: true,
+      });
+      tiDb.createIndex("id", "id", { unique: true });
+      tiDb.createIndex("url", "url", { unique: false });
+      tiDb.createIndex("created", "created", { unique: false });
+      const ulDb = db.createObjectStore(USER_LOG_STORE_NAME, {
+        keyPath: "id",
+        autoIncrement: true,
+      });
+      ulDb.createIndex("created", "created", { unique: false });
     };
   });
 };

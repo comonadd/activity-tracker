@@ -274,7 +274,10 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
   const x = scaleTime().domain([dayStart, dayEnd]).range([0, width]);
   const y = scaleLinear().domain([minHeight, maxHeight]).range([height, 0]);
 
-  const [showGroups, setShowGroups] = useLocalStorageState(false);
+  const [showGroups, setShowGroups] = useLocalStorageState(
+    "show-graph-groups",
+    false
+  );
 
   if (data.length === 0) return null;
 
