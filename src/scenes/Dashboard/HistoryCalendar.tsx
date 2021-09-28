@@ -10,7 +10,7 @@ import { Typography, Paper } from "~/theme";
 import React from "react";
 import AppContext from "~/AppContext";
 import { history } from "~/routeManager";
-
+import NoRecords from "./NoRecords";
 import { useCursorPaginatedController } from "~/hooks";
 import { Configuration } from "~/configuration";
 import {
@@ -144,15 +144,13 @@ const HistoryCalendar = (_: HistoryCalendarProps) => {
         );
       }
       return (
-        <div className="w-100 h-100 f-100">
-          <Typography component="p" variant="subtitle1">
-            No tracked records found
-          </Typography>
+        <div className="w-100 h-100 f-100 df fc">
+          <NoRecords />
         </div>
       );
     }
     return (
-      <>
+      <div className="full-history-calendar-items">
         {months.map((monthDate: number) => {
           const monthEntries: Day[] = allMonthsByYear.get(monthDate);
           return (
@@ -169,7 +167,7 @@ const HistoryCalendar = (_: HistoryCalendarProps) => {
             <CircularProgress />
           </div>
         )}
-      </>
+      </div>
     );
   }, [loadingRecords, trackedRecordsGrouped, config, allDayDates]);
 
@@ -185,9 +183,9 @@ const HistoryCalendar = (_: HistoryCalendarProps) => {
     })();
   }, [trackedRecordsP]);
   return (
-    <div className="full-history-calendar">
-      <div className="full-history-calendar-items">{renderedCalendar}</div>
-      <Sentry whenInView={loadMore} />
+    <div className="full-history-calendar f-100">
+      {renderedCalendar}
+      {!trackedRecordsP.loadedEverything && <Sentry whenInView={loadMore} />}
     </div>
   );
 };

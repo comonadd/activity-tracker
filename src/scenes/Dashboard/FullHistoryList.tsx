@@ -1,4 +1,4 @@
-import React, { useMemo, useContext } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { calcProductivityLevelForDay } from "~/util";
 import { unixDuration, dateToString } from "~/dates";
 import { Configuration } from "~/configuration";
@@ -8,11 +8,12 @@ import {
   trackedRecordFetcher,
 } from "~/trackedRecord";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import { usePagedPaginatedController } from "~/hooks";
+import { useLocalStorageState, usePagedPaginatedController } from "~/hooks";
 import { history } from "~/routeManager";
 import AppContext from "~/AppContext";
 import { Grid, Card, CardContent, Button, Typography } from "~/theme";
 import Pagination from "~/components/Pagination";
+import NoRecords from "./NoRecords";
 
 const FullHistoryDay = (props: {
   config: Configuration<any>;
@@ -64,12 +65,30 @@ const FullHistoryDay = (props: {
 
 const FullHistoryList = () => {
   const { config } = useContext(AppContext);
+  const [startFrom, setStartFrom] = useLocalStorageState<number>(
+    "full-history-list-page",
+    0
+  );
   const trackedRecordsP = usePagedPaginatedController<TrackInfoRecord>(
     trackedRecordFetcher,
     {
+      startFrom,
       perPage: 7,
     }
   );
+  const [loadedFirstItems, setLoadedFirstItems] = useState(false);
+  useEffect(() => {
+    if (
+      !loadedFirstItems &&
+      !trackedRecordsP.loading &&
+      trackedRecordsP.data.length !== 0
+    ) {
+      setLoadedFirstItems(true);
+    }
+  }, [trackedRecordsP.loading]);
+  useEffect(() => {
+    setStartFrom(trackedRecordsP.currentPage);
+  }, [trackedRecordsP.currentPage]);
   const trackedRecords = trackedRecordsP.data;
   const trackedRecordsGrouped: TrackedRecordsGrouped = React.useMemo(() => {
     if (!trackedRecords || trackedRecords.length === 0) return new Map();
@@ -88,36 +107,34 @@ const FullHistoryList = () => {
   );
 
   const renderedItems = useMemo(() => {
+    if (trackedRecordsP.loading) {
+      return (
+        <div className="w-100 h-100 f-100 df fc">
+          <CircularProgress />
+        </div>
+      );
+    }
+    if (allDayDates.length === 0) {
+      return <NoRecords />;
+    }
     return (
       <div className="f-100">
-        {trackedRecordsP.loading ? (
-          <div className="w-100 h-100 f-100 df fc">
-            <CircularProgress />
-          </div>
-        ) : allDayDates.length === 0 ? (
-          <div className="w-100 h-100 f-100">
-            <Typography component="p" variant="subtitle1">
-              No tracked records found
-            </Typography>
-          </div>
-        ) : (
-          <Grid container spacing={1} className="pv-8 ph-2">
-            {allDayDates.map((d) => {
-              const records = trackedRecordsGrouped.get(d);
-              const day = new Date(d);
-              return (
-                <Grid item xs={12} key={d}>
-                  <FullHistoryDay
-                    config={config}
-                    key={d}
-                    date={day}
-                    records={records}
-                  />
-                </Grid>
-              );
-            })}
-          </Grid>
-        )}
+        <Grid container spacing={1} className="pv-8 ph-2">
+          {allDayDates.map((d) => {
+            const records = trackedRecordsGrouped.get(d);
+            const day = new Date(d);
+            return (
+              <Grid item xs={12} key={d}>
+                <FullHistoryDay
+                  config={config}
+                  key={d}
+                  date={day}
+                  records={records}
+                />
+              </Grid>
+            );
+          })}
+        </Grid>
       </div>
     );
   }, [
@@ -129,16 +146,18 @@ const FullHistoryList = () => {
   return (
     <div className="full-history w-100 h-100 df f-100">
       {renderedItems}
-      <div className="full-history-pagination df pv-8">
-        <Pagination
-          count={trackedRecordsP.totalPages}
-          current={trackedRecordsP.currentPage}
-          radius={3}
-          onChange={(n) => {
-            trackedRecordsP.loadPage(n);
-          }}
-        />
-      </div>
+      {loadedFirstItems && (
+        <div className="full-history-pagination df pv-8">
+          <Pagination
+            count={trackedRecordsP.totalPages}
+            current={trackedRecordsP.currentPage}
+            radius={3}
+            onChange={(n) => {
+              trackedRecordsP.loadPage(n);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

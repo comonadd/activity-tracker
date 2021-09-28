@@ -49,16 +49,23 @@ const Pagination = (props: PaginationProps) => {
     }
     return items;
   }, [props.count, props.current]);
-  const lastPage = (
-    <NumButton key="last" n={props.count} onChange={props.onChange} />
-  );
   return (
     <div className="paginator df dfr">
+      {props.current > props.radius && (
+        <>
+          <NumButton key="first" n={0} onChange={props.onChange} />
+          <span className="df fcv mh-8">...</span>
+        </>
+      )}
       {left}
       {current}
       {right}
-      <span className="df fcv mh-8">...</span>
-      {lastPage}
+      {props.current < props.count - props.radius && (
+        <>
+          <span className="df fcv mh-8">...</span>
+          <NumButton key="last" n={props.count} onChange={props.onChange} />
+        </>
+      )}
     </div>
   );
 };

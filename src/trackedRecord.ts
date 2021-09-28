@@ -140,7 +140,6 @@ export const trackedRecordFetcher = {
       }
       return acc;
     }, []);
-    console.log(data.length);
     return data;
   },
 };

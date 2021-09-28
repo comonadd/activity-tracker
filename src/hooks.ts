@@ -61,6 +61,7 @@ export function useCursorPaginatedController<T, C>(
 }
 
 interface PagedPaginationFetcherOptions {
+  startFrom?: number;
   perPage?: number;
   reversed?: boolean;
 }
@@ -87,10 +88,11 @@ export function usePagedPaginatedController<T>(
   fetchData: PagedPaginatedDataFetcher<T>,
   options: PagedPaginationFetcherOptions = {}
 ): PagedPaginatedController<T> {
+  const startFrom = options?.startFrom ?? 0;
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState<number | null>(null);
-  const [currentPage, setcurrentPage] = useState(0);
+  const [currentPage, setcurrentPage] = useState(startFrom);
   const lastPage = currentPage === totalPages;
   const firstPage = currentPage === 0;
   const fetchPage = useCallback(
@@ -119,7 +121,7 @@ export function usePagedPaginatedController<T>(
 
   useEffect(() => {
     if (totalPages === 0 || totalPages === null) return;
-    fetchPage(0);
+    fetchPage(startFrom);
   }, [totalPages]);
 
   useEffect(() => {
