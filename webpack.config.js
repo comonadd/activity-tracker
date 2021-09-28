@@ -1,17 +1,21 @@
 const webpack = require("webpack");
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
+const fs = require("fs");
+const fse = require("fs-extra");
 
 const DEV = process.env.NODE_ENV === "development";
 const SRC = path.resolve(__dirname, "src");
 const BUILD = path.resolve(__dirname, "build");
+const DIST = path.resolve(__dirname, "dist");
+const chromeOut = path.resolve(DIST, "chrome");
+const firefoxOut = path.resolve(DIST, "firefox");
 
 module.exports = {
   mode: DEV ? "development" : "production",
   entry: {
     dashboard: `${SRC}/dashboard.tsx`,
     options: `${SRC}/options.tsx`,
-    popup: `${SRC}/popup.ts`,
     background: `${SRC}/background.ts`,
   },
   output: {
@@ -53,13 +57,33 @@ module.exports = {
   plugins: [
     new CopyPlugin({
       patterns: [
-        { from: `${SRC}/popup.html`, to: BUILD },
-        { from: `${SRC}/popup.css`, to: BUILD },
         { from: `${SRC}/dashboard.html`, to: BUILD },
         { from: `${SRC}/dashboard.css`, to: BUILD },
         { from: `${SRC}/options.html`, to: BUILD },
-        { from: `${SRC}/manifest.json`, to: BUILD },
+        { from: `${SRC}/images`, to: path.resolve(BUILD, "images") },
       ],
     }),
+
+    // Create two extension directories with different manifests for chrome / firefox
+    {
+      apply: (compiler) => {
+        compiler.hooks.afterEmit.tap("AfterEmitPlugin", (compilation) => {
+          fs.rmSync(DIST, { recursive: true, force: true });
+          fs.mkdirSync(DIST);
+          // chrome
+          fse.copySync(BUILD, chromeOut);
+          fs.copyFileSync(
+            path.resolve(SRC, "chrome-manifest.json"),
+            path.resolve(chromeOut, "manifest.json")
+          );
+          // firefox
+          fse.copySync(BUILD, firefoxOut);
+          fs.copyFileSync(
+            path.resolve(SRC, "firefox-manifest.json"),
+            path.resolve(firefoxOut, "manifest.json")
+          );
+        });
+      },
+    },
   ],
 };
