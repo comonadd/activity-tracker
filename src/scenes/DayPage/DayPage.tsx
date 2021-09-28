@@ -10,6 +10,7 @@ import TopSites from "./TopSites";
 import FullDayLog from "./FullDayLog";
 import DayGraph from "./DayGraph";
 import BreadcrumbsForPath from "~/components/BreadcrumbsForPath";
+import { useLocalStorageState } from "~/hooks";
 
 interface DayPageProps {
   year: string;
@@ -55,7 +56,7 @@ const DayPage = (props: DayPageProps) => {
       setRecords(res);
     })();
   }, []);
-  const [currTab, setCurrTab] = React.useState<number>(2);
+  const [currTab, setCurrTab] = useLocalStorageState<number>("day-page-tab", 0);
 
   const handleChange = (event: React.SyntheticEvent<any>, newValue: number) => {
     setCurrTab(newValue);

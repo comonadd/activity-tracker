@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Configuration } from "~/configuration";
 import { getProdPerc } from "~/util";
-import { useTheme } from "~/theme";
+import { Tooltip, useTheme } from "~/theme";
 
 const ProductivityLevel = (props: {
   config: Configuration<any>;
@@ -12,20 +12,47 @@ const ProductivityLevel = (props: {
   const prodP = getProdPerc(config, level);
   const width = 100 - prodP;
   const { prodBarLowColor, prodBarHighColor } = useTheme();
+  const [ts, setTooltipState] = useState({
+    shown: false,
+  });
+  const handleClose = () => setTooltipState({ shown: false });
+  const handleOpen = () => setTooltipState({ shown: true });
   return (
-    <div
-      className={`${props.className} prod-level-bar`}
-      style={{
-        background: `linear-gradient(75deg, ${prodBarLowColor}, ${prodBarHighColor}`,
-      }}
+    <Tooltip
+      placement="bottom-start"
+      title={`Productivity is ${prodP}%`}
+      open={ts.shown}
+      onClose={handleClose}
+      onOpen={handleOpen}
     >
       <div
-        className="prod-level-bar__part"
+        className={`${props.className} prod-level-bar`}
         style={{
-          width: `${width}%`,
+          background: `linear-gradient(75deg, ${prodBarLowColor}, ${prodBarHighColor}`,
         }}
-      ></div>
-    </div>
+        onMouseOver={(e) => {
+          e.stopPropagation();
+          handleOpen();
+        }}
+        onMouseOut={(e) => {
+          e.stopPropagation();
+          handleClose();
+        }}
+      >
+        <div
+          className="prod-level-bar__part"
+          style={{
+            width: `${width}%`,
+          }}
+          onMouseOver={(e) => {
+            e.stopPropagation();
+          }}
+          onMouseOut={(e) => {
+            e.stopPropagation();
+          }}
+        ></div>
+      </div>
+    </Tooltip>
   );
 };
 

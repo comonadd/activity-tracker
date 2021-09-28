@@ -5,6 +5,10 @@
   height: 100%;
 }
 
+.dashboard::-webkit-scrollbar {
+  display: none;
+}
+
 .day {
   margin-bottom: 8px;
 }
@@ -136,4 +140,8 @@
 }
 
 .day-page-tab {
+}
+
+.MuiDataGrid-window {
+  overflow-x: auto;
 }
