@@ -8,12 +8,13 @@ import {
   trackedRecordFetcher,
 } from "~/trackedRecord";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import { useLocalStorageState, usePagedPaginatedController } from "~/hooks";
-import { history } from "~/routeManager";
+import { usePagedPaginatedController } from "~/hooks";
+import { useQueryParam, history } from "~/routeManager";
 import AppContext from "~/AppContext";
 import { Grid, Card, CardContent, Button, Typography } from "~/theme";
 import Pagination from "~/components/Pagination";
 import NoRecords from "./NoRecords";
+import ProductivityLevel from "~/components/ProductivityLevel";
 
 const FullHistoryDay = (props: {
   config: Configuration<any>;
@@ -27,35 +28,41 @@ const FullHistoryDay = (props: {
     records.length !== 0 ? records[records.length - 1].created : new Date();
   const dayDuration = maxTimestamp.getTime() - minTimestamp.getTime();
   const productivityLevel = calcProductivityLevelForDay(config, records);
-  const prodPerc = Math.round(
-    (productivityLevel / config.prodUpperBound) * 100
-  );
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
   return (
-    <Card elevation={2}>
-      <CardContent>
-        <Grid container spacing={1}>
-          <Grid item xs={10}>
-            <Typography component="div" variant="h5">
-              {dateToString(date)}
-            </Typography>
-            <Typography variant="subtitle2" component="div">
-              {`${prodPerc}% ${unixDuration(dayDuration)}`}
-            </Typography>
+    <Card elevation={2} className="full-history-item">
+      <CardContent className="full-history-item__content">
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Grid container spacing={1}>
+              <Grid item xs={10}>
+                <Typography component="div" variant="h5">
+                  {dateToString(date)}
+                </Typography>
+                <div>
+                  <span className="fs-12">{`${unixDuration(
+                    dayDuration
+                  )}`}</span>
+                </div>
+              </Grid>
+              <Grid item xs={2} className="df fcv frr">
+                <Button
+                  onClick={() => {
+                    history.push(`/${year}/${month}/${day}`);
+                  }}
+                  variant="outlined"
+                  color="primary"
+                  disableElevation
+                >
+                  Details
+                </Button>
+              </Grid>
+            </Grid>
           </Grid>
-          <Grid item xs={2} className="df fcv frr">
-            <Button
-              onClick={() => {
-                history.push(`/${year}/${month}/${day}`);
-              }}
-              variant="outlined"
-              color="primary"
-              disableElevation
-            >
-              Details
-            </Button>
+          <Grid item xs={12}>
+            <ProductivityLevel config={config} level={productivityLevel} />
           </Grid>
         </Grid>
       </CardContent>
@@ -63,11 +70,11 @@ const FullHistoryDay = (props: {
   );
 };
 
-const FullHistoryList = () => {
+const FullHistoryList = (props: { page: number }) => {
   const { config } = useContext(AppContext);
-  const [startFrom, setStartFrom] = useLocalStorageState<number>(
-    "full-history-list-page",
-    0
+  const [startFrom, setStartFrom] = useQueryParam<number>(
+    "page",
+    props.page ?? 0
   );
   const trackedRecordsP = usePagedPaginatedController<TrackInfoRecord>(
     trackedRecordFetcher,

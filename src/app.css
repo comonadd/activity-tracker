@@ -7,6 +7,8 @@
   --danger-color: #ca0b00;
   --success-color: #016401;
   --warning-color: #f0d500;
+  --page-max-width: 1200px;
+  --prod-level-width: 12px;
 }
 
 body,
@@ -22,8 +24,8 @@ html,
 .prod-level-bar {
   background: white;
   width: 100%;
-  height: 20px;
-  flex: 0 0 20px;
+  height: var(--prod-level-width);
+  flex: 0 0 var(--prod-level-width);
   border: 1px solid #eee;
   display: flex;
   flex-direction: row-reverse;
@@ -48,13 +50,37 @@ html,
   overflow-x: hidden;
 }
 
-.app,
-.page {
+.app {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   box-sizing: border-box;
+  align-items: center;
+  background: #e6e6e6;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: var(--page-max-width);
+  box-sizing: border-box;
+  border-color: #eee;
+  border-style: solid;
+  border-left-width: 1px;
+  border-right-width: 1px;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  background: #ffffff;
+  overflow-x: hidden;
+}
+
+@media screen and (max-width: 1200px) {
+  .page {
+    width: 100%;
+    border: none;
+  }
 }
 
 .pv-2 {
@@ -82,12 +108,16 @@ html,
   margin-bottom: 8px;
 }
 
+.mt-1 {
+  margin-top: 2px;
+}
+
 .mb-4 {
   margin-bottom: 16px;
 }
 
-.mt-1 {
-  margin-top: 2px;
+.mb-2 {
+  margin-bottom: 4px;
 }
 
 .mh-8 {

@@ -54,7 +54,7 @@ const iconForMode = (viewingMode: Mode) => {
   }
 };
 
-const Dashboard = () => {
+const Dashboard = (props: { page: number }) => {
   const { config } = useContext(AppContext);
   const [viewingMode, setViewingMode] = useLocalStorageState<Mode>(
     "viewing-mode",
@@ -78,7 +78,7 @@ const Dashboard = () => {
     switch (viewingMode) {
       case Mode.List:
         {
-          return <FullHistoryList />;
+          return <FullHistoryList page={props.page} />;
         }
         break;
       case Mode.Calendar:
@@ -93,7 +93,7 @@ const Dashboard = () => {
         }
         break;
     }
-  }, [config, viewingMode]);
+  }, [config, viewingMode, props.page]);
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
@@ -146,81 +146,79 @@ const Dashboard = () => {
         text="Do you really want to delete all of your tracked data?"
       />
       <FileSelector onSelected={onImportData} ref={fileSelector} />
-      <Page title="Activity Dashboard">
-        <div className="dashboard">
-          <header className="header df fsb">
-            <Typography component="h1" variant="h3">
-              My Activity
-            </Typography>
-            <div className="dashboard-controls fcv">
-              <Grid container spacing={1} className="fcv">
-                <Grid item>
-                  <IconButton
-                    onClick={() => toggleViewingMode()}
-                    size="medium"
-                    title="Toggle view"
-                  >
-                    {viewingModeIcon}
-                  </IconButton>
-                </Grid>
-                <Grid item>
-                  <IconButton
-                    onClick={() => {
-                      location.assign(paths.OPTIONS_PAGE);
-                    }}
-                    size="medium"
-                    title="Open settings"
-                  >
-                    <SettingsIcon />
-                  </IconButton>
-                </Grid>
-                <Grid item>
-                  <IconButton
-                    id="dashboard-menu-button"
-                    aria-controls="dashboard-menu"
-                    aria-haspopup="true"
-                    aria-expanded={open ? "true" : undefined}
-                    onClick={handleClick}
-                  >
-                    <MoreVertIcon />
-                  </IconButton>
-                  <Menu
-                    id="dashbboard-menu"
-                    anchorEl={anchorEl}
-                    open={open}
-                    onClose={handleClose}
-                    MenuListProps={{
-                      "aria-labelledby": "dashboard-menu-button",
-                    }}
-                  >
-                    {process.env.NODE_ENV === "development" && (
-                      <MenuItem
-                        onClick={() => {
-                          (async () => {
-                            setPopulatingStorage(true);
-                            await populateStorageWithRandomData(config);
-                            setPopulatingStorage(false);
-                          })();
-                        }}
-                        disabled={populatingStorage}
-                      >
-                        Populate storage with random data
-                      </MenuItem>
-                    )}
-                    <MenuItem
-                      onClick={() => setOpenClearStorageConfirmation(true)}
-                    >
-                      Clear storage
-                    </MenuItem>
-                    <MenuItem onClick={exportData}>Export Data</MenuItem>
-                    <MenuItem onClick={importData}>Import Data</MenuItem>
-                  </Menu>
-                </Grid>
+      <Page title="Activity Dashboard" className="dashboard">
+        <header className="header df fsb">
+          <Typography component="h1" variant="h3">
+            My Activity
+          </Typography>
+          <div className="dashboard-controls fcv">
+            <Grid container spacing={1} className="fcv">
+              <Grid item>
+                <IconButton
+                  onClick={() => toggleViewingMode()}
+                  size="medium"
+                  title="Toggle view"
+                >
+                  {viewingModeIcon}
+                </IconButton>
               </Grid>
-            </div>
-          </header>
-          {historyRendered}
-        </div>
+              <Grid item>
+                <IconButton
+                  onClick={() => {
+                    location.assign(paths.OPTIONS_PAGE);
+                  }}
+                  size="medium"
+                  title="Open settings"
+                >
+                  <SettingsIcon />
+                </IconButton>
+              </Grid>
+              <Grid item>
+                <IconButton
+                  id="dashboard-menu-button"
+                  aria-controls="dashboard-menu"
+                  aria-haspopup="true"
+                  aria-expanded={open ? "true" : undefined}
+                  onClick={handleClick}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+                <Menu
+                  id="dashbboard-menu"
+                  anchorEl={anchorEl}
+                  open={open}
+                  onClose={handleClose}
+                  MenuListProps={{
+                    "aria-labelledby": "dashboard-menu-button",
+                  }}
+                >
+                  {process.env.NODE_ENV === "development" && (
+                    <MenuItem
+                      onClick={() => {
+                        (async () => {
+                          setPopulatingStorage(true);
+                          await populateStorageWithRandomData(config);
+                          setPopulatingStorage(false);
+                        })();
+                      }}
+                      disabled={populatingStorage}
+                    >
+                      Populate storage with random data
+                    </MenuItem>
+                  )}
+                  <MenuItem
+                    onClick={() => setOpenClearStorageConfirmation(true)}
+                  >
+                    Clear storage
+                  </MenuItem>
+                  <MenuItem onClick={exportData}>Export Data</MenuItem>
+                  <MenuItem onClick={importData}>Import Data</MenuItem>
+                </Menu>
+              </Grid>
+            </Grid>
+          </div>
+        </header>
+        {historyRendered}
       </Page>
     </DashboardContext.Provider>
   );

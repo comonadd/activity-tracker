@@ -1,7 +1,6 @@
 import React, { useContext, useMemo, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { useExtStorage } from "./util";
-import { dateToString } from "~/dates";
 import { Configuration } from "~/configuration";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
@@ -17,6 +16,7 @@ import paths from "~/paths";
 import AppContext from "~/AppContext";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { Link, Breadcrumbs } from "~/theme";
+import { DataGrid } from "@mui/x-data-grid";
 
 const ConfigEditor = () => {
   const { config, setConfig } = useContext(AppContext);
@@ -142,6 +142,10 @@ const ConfigEditor = () => {
 };
 
 const logsPerPage = 20;
+const columns = [
+  { field: "created", headerName: "Date", width: 150 },
+  { field: "msg", headerName: "Message", width: 400 },
+];
 
 const LogsDisplay = () => {
   const [logs, setLogs] = useState<UserLogMessage[]>([]);
@@ -170,14 +174,11 @@ const LogsDisplay = () => {
     if (logs.length === 0) {
       return <div className="pv-8">No logs found</div>;
     }
-    return logs.map((log) => {
-      return (
-        <div
-          key={log.created.getTime()}
-          className="logs__item"
-        >{`[${dateToString(log.created)}]: ${log.msg}`}</div>
-      );
-    });
+    return (
+      <div className="logs-list">
+        <DataGrid rows={logs} columns={columns} checkboxSelection />
+      </div>
+    );
   }, [logs]);
 
   return (
@@ -194,7 +195,7 @@ const LogsDisplay = () => {
           </div>
         </Grid>
         <Grid item xs={12}>
-          <div className="logs-list">{logsRendered}</div>
+          {logsRendered}
         </Grid>
       </Grid>
     </div>

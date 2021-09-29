@@ -1,4 +1,4 @@
-import { DbHandle, createIDBEntity, db } from "~/db";
+import { createIDBEntity, db } from "~/db";
 import { USER_LOG_STORE_NAME } from "~/constants";
 
 export const UserLog = createIDBEntity<UserLogMessage, "created">(
@@ -20,11 +20,9 @@ export interface UserLogMessage {
 }
 
 export const saveUserLogMessage = async (
-  db: DbHandle,
   msg: Omit<UserLogMessage, "created">
 ) => {
-  const tx = db.transaction(USER_LOG_STORE_NAME, "readwrite");
-  await tx.store.put({ ...msg, created: new Date() });
+  await UserLog.create({ ...msg, created: new Date() });
 };
 
 export const clearUserLogs = async () => {

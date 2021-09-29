@@ -21,13 +21,19 @@ import { Configuration } from "~/configuration";
 import { AppThemeProvider } from "~/theme";
 import "~/app.css";
 import "~/dashboard.css";
+import { History, createBrowserHistory } from "history";
 
 const NotFound = () => {
   return <Page title="Not found">Not found</Page>;
 };
 
 const routeMatcher: RouteMatcher = [
-  [/^\/$/g, () => <Dashboard />],
+  [
+    /^\/$/g,
+    (_, qryParams = {}) => (
+      <Dashboard page={qryParams.page ? parseInt(qryParams.page) : undefined} />
+    ),
+  ],
   [/^\/(\d+)\/(\d+)\/?$/g, () => <YearPage />],
   [/^\/(\d+)\/(\d+)\/?$/g, () => <MonthPage />],
   [
@@ -37,9 +43,21 @@ const routeMatcher: RouteMatcher = [
   [/.*/g, () => <NotFound />],
 ];
 
+const Router = (props: { children: React.ReactElement; history: History }) => {
+  const [currRouteParams, setCurrRouteParams] = React.useState<RouteParams>({});
+  return (
+    <RouterContext.Provider
+      value={{ params: currRouteParams, history: props.history }}
+    >
+      {props.children}
+    </RouterContext.Provider>
+  );
+};
+
+const history = createBrowserHistory();
+
 const App = () => {
   const location = useLocation();
-  const [currRouteParams, setCurrRouteParams] = React.useState<RouteParams>({});
   const [config, setConfig, cStatus] =
     useExtStorage<Configuration<any>>("tracker-config");
   React.useEffect(() => {
@@ -50,13 +68,13 @@ const App = () => {
   if (cStatus === LStatus.Loading) return null;
   const componentToRender = matchLocation(routeMatcher, location);
   return (
-    <RouterContext.Provider value={{ params: currRouteParams }}>
+    <Router history={history}>
       <AppContext.Provider value={{ config, setConfig }}>
         <AppThemeProvider>
           <div className="app">{componentToRender}</div>
         </AppThemeProvider>
       </AppContext.Provider>
-    </RouterContext.Provider>
+    </Router>
   );
 };
 

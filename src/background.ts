@@ -26,7 +26,7 @@ const trackUrl = async (url: string) => {
   const uu = new URL(url);
   url = uu.origin + uu.pathname;
   if (t === null) {
-    saveUserLogMessage(state.dbHandle, {
+    saveUserLogMessage({
       type: UserLogMessageType.Warning,
       msg: `No activity matcher for path found: "${url}"`,
     });

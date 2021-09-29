@@ -99,7 +99,7 @@ export function usePagedPaginatedController<T>(
     async (pageNum: number) => {
       console.assert(totalPages !== null, "Total pages not known yet");
       console.assert(
-        pageNum >= 0 && pageNum < totalPages,
+        pageNum >= 0 && pageNum <= totalPages,
         `Tried to fetch page number which is outside of the boundaries (pageNum: ${pageNum}, totalPages: ${totalPages})`
       );
       setLoading(true);

@@ -68,7 +68,6 @@ const ProdLine = (props: {
   y: AxisScale<AxisDomain>;
 }) => {
   const { data, x, y } = props;
-  const line = useRef(null);
   const { prodGraphFillColor } = useTheme();
   const rendered = useMemo(() => {
     const lineGenerator = d3
@@ -158,7 +157,7 @@ const SiteGroupCols = (props: {
           y={ypos}
           fill={recordColor(datum.rec)}
           d={areaGenerator([data[i], next])}
-          onMouseOver={(d) => {
+          onMouseOver={() => {
             setTooltipState({
               shown: true,
               x: xpos,

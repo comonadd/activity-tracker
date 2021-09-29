@@ -1,10 +1,3 @@
-.dashboard {
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-  height: 100%;
-}
-
 .dashboard::-webkit-scrollbar {
   display: none;
 }
@@ -60,6 +53,9 @@
 }
 
 .header {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
 }
 
 .full-history-calendar-items {
@@ -71,6 +67,12 @@
 .full-history {
   display: flex;
   flex-direction: column;
+  max-width: var(--page-max-width);
+}
+
+.full-history-item__content {
+  padding: 12px;
+  padding-bottom: 12px !important;
 }
 
 .full-history-pagination {
@@ -137,9 +139,14 @@
 
 .day-graph {
   flex: 1 1 100%;
+  user-select: none;
 }
 
-.day-page-tab {
+.day-page {
+}
+
+.day-tabs {
+  margin-bottom: 16px;
 }
 
 .MuiDataGrid-window {

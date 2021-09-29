@@ -118,10 +118,10 @@ export const trackedRecordFetcher = {
       reversed: boolean;
     }
   ): Promise<TrackInfoRecord[]> {
-    const offset = pageNum * options.perPage;
+    const offset = Math.max((pageNum - 1) * options.perPage, 0);
     let qry = TrackedRecord.query()
-      .byIndex("id")
-      .from(offset)
+      .byIndex("created")
+      .offset(offset)
       .groupBy((item: any) => {
         return new Date(
           item.created.getFullYear(),

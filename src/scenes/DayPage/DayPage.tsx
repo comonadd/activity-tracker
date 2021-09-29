@@ -63,7 +63,7 @@ const DayPage = (props: DayPageProps) => {
   };
 
   return (
-    <Page title={`${year}/${month}/${day}`}>
+    <Page title={`${year}/${month}/${day}`} className="day-page">
       <Breadcrumbs />
       <div className="mb-2">
         <Typography component="h1" variant="h4">
@@ -77,14 +77,15 @@ const DayPage = (props: DayPageProps) => {
         aria-label="Day tabs"
         textColor="secondary"
         indicatorColor="secondary"
+        className="day-tabs"
       >
-        <Tab className="day-page-tab" label="Full log" {...a11yProps(0)} />
+        <Tab className="day-page-tab" label="Full Log" {...a11yProps(0)} />
         <Tab
           className="day-page-tab"
           label="Top sites by usage"
           {...a11yProps(1)}
         />
-        <Tab className="day-page-tab" label="Day graph" {...a11yProps(2)} />
+        <Tab className="day-page-tab" label="Graph" {...a11yProps(2)} />
       </Tabs>
       <TabPanel value={currTab} index={0}>
         <FullDayLog records={records} />

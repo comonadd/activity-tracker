@@ -1,12 +1,15 @@
 import React, { useState, createContext } from "react";
-import { createHashHistory, Location } from "history";
-export { Location } from "history";
+import { History, createHashHistory, Location } from "history";
 
 export type RouteParams = Record<string, string>;
 export interface IRouterContext {
   params: RouteParams;
+  history: History;
 }
-export const RouterContext = createContext<IRouterContext>({ params: {} });
+export const RouterContext = createContext<IRouterContext>({
+  params: {},
+  history: null,
+});
 // Return all parameters for the current route
 export function useParams<T>(): T {
   const { params } = React.useContext(RouterContext);
@@ -15,7 +18,24 @@ export function useParams<T>(): T {
 
 export const history = createHashHistory();
 
-export type RouteMatcher = [RegExp, (...args: any[]) => any][];
+type QueryParams = Record<string, string> | undefined;
+
+export type RouteMatcher = [
+  RegExp,
+  (params: any[], qryParams: QueryParams) => any
+][];
+
+const parseQueryParams = (loc: Location): QueryParams =>
+  loc.search.length === 0
+    ? undefined
+    : loc.search
+        .substr(1)
+        .split("&")
+        .reduce((acc, p) => {
+          const [key, value] = p.split("=");
+          acc[key] = value;
+          return acc;
+        }, {} as QueryParams);
 
 export const matchLocation = (
   config: RouteMatcher,
@@ -33,6 +53,7 @@ export const matchLocation = (
       p = loc.hash.substr(1, loc.hash.length);
     }
   }
+  const qryParams: QueryParams = parseQueryParams(loc);
   for (const pair of config) {
     const r = pair[0];
     if (new RegExp(r).test(p)) {
@@ -45,11 +66,50 @@ export const matchLocation = (
       delete params["groups"];
       params = params.slice(1);
       const c = pair[1];
-      return c(params);
+      return c(params, qryParams);
     }
   }
   return () => null as any;
 };
+
+function constructQueryParamsString(qParams: QueryParams): string {
+  let p = "";
+  const keys = Object.keys(qParams);
+  for (let i = 0; i < keys.length; ++i) {
+    const key = keys[i];
+    const value = qParams[key];
+    p += `${key}=${value}${i !== keys.length - 1 ? "&" : ""}`;
+  }
+  return `?${p}`;
+}
+
+function updateQueryParams(loc: Location, key: string, value: string): string {
+  const qParams = parseQueryParams(loc) ?? {};
+  qParams[key] = value;
+  const newLoc = new URL(loc as any);
+  newLoc.search = constructQueryParamsString(qParams);
+  return newLoc.href;
+}
+
+export function useQueryParam<T>(
+  key: string,
+  initialValue: T
+): [T, (v: T) => void] {
+  const { history } = React.useContext(RouterContext);
+  const location = window.location;
+  const qParams: QueryParams = parseQueryParams(location as any) ?? {};
+  const getInitialValue = (): T => {
+    if (qParams[key]) return JSON.parse(qParams[key]);
+    return initialValue;
+  };
+  const [currValue, setCurrValue] = useState<T>(getInitialValue());
+  React.useEffect(() => {
+    const newValue = JSON.stringify(currValue);
+    if (qParams[key] === newValue) return;
+    (history as any).push(updateQueryParams(location as any, key, newValue));
+  }, [currValue]);
+  return [currValue, setCurrValue];
+}
 
 export const useLocation = (): Location => {
   const [location, setLocation] = useState<Location>(window.location as any);
