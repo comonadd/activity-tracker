@@ -15,8 +15,9 @@ import FormHelperText from "@material-ui/core/FormHelperText";
 import paths from "~/paths";
 import AppContext from "~/AppContext";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import { Link, Breadcrumbs } from "~/theme";
+import { AppThemeProvider, Link, Breadcrumbs } from "~/theme";
 import { DataGrid } from "@mui/x-data-grid";
+import Page from "~/components/Page";
 
 const ConfigEditor = () => {
   const { config, setConfig } = useContext(AppContext);
@@ -207,13 +208,20 @@ const OptionsPage = () => {
     useExtStorage<Configuration<any>>("tracker-config");
   return (
     <AppContext.Provider value={{ config, setConfig }}>
-      <div className="config-page">
-        <Breadcrumbs aria-label="breadcrumb">
-          <Link href={paths.DASHBOARD_PAGE}>Dashboard</Link>
-        </Breadcrumbs>
-        <ConfigEditor />
-        <LogsDisplay />
-      </div>
+      <AppThemeProvider>
+        <div className="app">
+          <Page title="Options" className="config-page">
+            <Breadcrumbs aria-label="breadcrumb">
+              <Link href={paths.DASHBOARD_PAGE}>Dashboard</Link>
+            </Breadcrumbs>
+            <Typography component="h1" variant="h3">
+              Options
+            </Typography>
+            <ConfigEditor />
+            <LogsDisplay />
+          </Page>
+        </div>
+      </AppThemeProvider>
     </AppContext.Provider>
   );
 };
