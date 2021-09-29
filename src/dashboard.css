@@ -134,7 +134,22 @@
   flex-direction: row;
   justify-content: space-between;
   font-size: 18px;
-  padding: 12px;
+  padding: 14px 20px;
+  align-items: center;
+}
+
+.top-sites-entry:nth-child(even) {
+  background: var(--white-color);
+}
+
+.top-sites-entry:nth-child(odd) {
+  background: #f6f6f6;
+}
+
+.top-sites-entry__cat {
+  border-radius: 100%;
+  height: 24px;
+  width: 24px;
 }
 
 .day-graph {

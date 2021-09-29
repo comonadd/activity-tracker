@@ -41,10 +41,15 @@ const Pagination = (props: PaginationProps) => {
       selected
     />
   );
+  const showLast = props.current < props.count - props.radius;
   const right = useMemo(() => {
     const items = [];
     const endAt = Math.min(props.current + props.radius + 1, props.count);
-    for (let k = props.current + 1; k < endAt; ++k) {
+    for (let k = props.current + 1; k <= endAt; ++k) {
+      // Don't show the last page twice
+      if (showLast && k === props.count) {
+        continue;
+      }
       items.push(<NumButton key={k} n={k} onChange={props.onChange} />);
     }
     return items;
@@ -60,7 +65,7 @@ const Pagination = (props: PaginationProps) => {
       {left}
       {current}
       {right}
-      {props.current < props.count - props.radius && (
+      {showLast && (
         <>
           <span className="df fcv mh-8">...</span>
           <NumButton key="last" n={props.count} onChange={props.onChange} />

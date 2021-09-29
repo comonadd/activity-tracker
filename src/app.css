@@ -9,6 +9,7 @@
   --warning-color: #f0d500;
   --page-max-width: 1200px;
   --prod-level-width: 12px;
+  --primary-color: #e9c46a;
 }
 
 body,
@@ -104,12 +105,20 @@ html,
   padding: 20px 0;
 }
 
-.mb-2 {
-  margin-bottom: 8px;
+.mb-1 {
+  margin-bottom: 2px;
 }
 
 .mt-1 {
   margin-top: 2px;
+}
+
+.mr-4 {
+  margin-right: 8px;
+}
+
+.mr-8 {
+  margin-right: 16px;
 }
 
 .mb-4 {
@@ -143,6 +152,10 @@ html,
 
 .fcv {
   align-items: center;
+}
+
+.fdc {
+  flex-direction: column;
 }
 
 .fc {

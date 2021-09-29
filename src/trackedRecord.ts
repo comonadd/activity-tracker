@@ -1,5 +1,5 @@
 import { TRACK_INFO_STORE_NAME, TIME_PRECISION_POINT } from "./constants";
-import { dateDiff, Duration } from "~/dates";
+import { durationHours, dateDiff, Duration } from "~/dates";
 import { Pair } from "~/types";
 import { calculateUrlType, ActivityType, Configuration } from "~/configuration";
 import { DbHandle, db, createIDBEntity } from "~/db";
@@ -18,6 +18,8 @@ export type TrackedDay = {
 
 export type TrackedRecordsGrouped = Map<number, TrackInfoRecord[]>;
 
+const DUR_MAX_BETWEEN_TWO_POINTS = durationHours(1);
+
 export const recDurationAtIndex = (
   records: TrackInfoRecord[],
   idx: number
@@ -27,7 +29,7 @@ export const recDurationAtIndex = (
   const duration: Duration | null = nextRow
     ? dateDiff(nextRow.created, rec.created)
     : TIME_PRECISION_POINT;
-  return duration;
+  return Math.min(duration, DUR_MAX_BETWEEN_TWO_POINTS);
 };
 
 // Single record = one visit to a particular URL
