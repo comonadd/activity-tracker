@@ -1,4 +1,4 @@
-ActivityTracker
-==============
+# ActivityTracker
 
-This is a chrome extension that allows you to track & view your activity history. All done locally.
+Firefox/Chrome extension that allows you to track & analyze your activity history.
+Everything is saved locally. Export/Import in JSON format is also available.
