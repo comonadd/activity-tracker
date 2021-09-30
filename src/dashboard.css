@@ -114,7 +114,7 @@
 .calendar-item {
   padding: 12px;
   cursor: pointer;
-  min-height: 100px;
+  min-height: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -138,18 +138,20 @@
   align-items: center;
 }
 
-.top-sites-entry:nth-child(even) {
-  background: var(--white-color);
+.top-sites-entry:nth-child(odd) {
+  background: #fafafa;
 }
 
-.top-sites-entry:nth-child(odd) {
-  background: #f6f6f6;
+.top-sites-entry:nth-child(even) {
+  background: transparent;
 }
 
 .top-sites-entry__cat {
   border-radius: 100%;
   height: 24px;
   width: 24px;
+  border: 1px solid grey;
+  box-sizing: border-box;
 }
 
 .day-graph {

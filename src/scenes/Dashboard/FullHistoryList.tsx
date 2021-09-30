@@ -11,7 +11,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import { usePagedPaginatedController } from "~/hooks";
 import { useQueryParam, history } from "~/routeManager";
 import AppContext from "~/AppContext";
-import { Grid, Card, CardContent, Button, Typography } from "~/theme";
+import { Size, Grid, Card, CardContent, Button, Typography } from "~/theme";
 import Pagination from "~/components/Pagination";
 import NoRecords from "./NoRecords";
 import ProductivityLevel from "~/components/ProductivityLevel";
@@ -38,7 +38,7 @@ const FullHistoryDay = (props: {
           <Grid item xs={12}>
             <Grid container spacing={1}>
               <Grid item xs={10}>
-                <Typography component="div" variant="h5">
+                <Typography component="div" variant="h6">
                   {dateToString(date)}
                 </Typography>
                 <div>
@@ -62,7 +62,11 @@ const FullHistoryDay = (props: {
             </Grid>
           </Grid>
           <Grid item xs={12}>
-            <ProductivityLevel config={config} level={productivityLevel} />
+            <ProductivityLevel
+              size={Size.Small}
+              config={config}
+              level={productivityLevel}
+            />
           </Grid>
         </Grid>
       </CardContent>
@@ -117,7 +121,7 @@ const FullHistoryList = (props: { page: number }) => {
     if (trackedRecordsP.loading) {
       return (
         <div className="w-100 h-100 f-100 df fc">
-          <CircularProgress />
+          <CircularProgress variant="indeterminate" />
         </div>
       );
     }
@@ -125,7 +129,7 @@ const FullHistoryList = (props: { page: number }) => {
       return <NoRecords />;
     }
     return (
-      <div className="f-100">
+      <div className="f-100 h-100">
         <Grid container spacing={1} className="pv-8 ph-2">
           {allDayDates.map((d) => {
             const records = trackedRecordsGrouped.get(d);

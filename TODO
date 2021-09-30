@@ -1,2 +1,3 @@
 Config page help
-Make it possible to "recalculate" URL type for the whole database after configuring
+Consider url ignore pattern when recalculating
+Do not recalculate if stuff that matters did not change

@@ -1,7 +1,7 @@
 import React, { useContext, useMemo, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { useExtStorage } from "./util";
-import { Configuration } from "~/configuration";
+import { DEFAULT_CONFIG, Configuration } from "~/configuration";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
@@ -15,9 +15,12 @@ import FormHelperText from "@material-ui/core/FormHelperText";
 import paths from "~/paths";
 import AppContext from "~/AppContext";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import { AppThemeProvider, Link, Breadcrumbs } from "~/theme";
-import { DataGrid } from "@mui/x-data-grid";
+import { IconButton, AppThemeProvider, Link, Breadcrumbs } from "~/theme";
+import { GridColumns, DataGrid } from "@mui/x-data-grid";
 import Page from "~/components/Page";
+import { dateToString } from "~/dates";
+import ConfirmDialog from "~/components/ConfirmDialog";
+import Replay from "@material-ui/icons/Replay";
 
 const ConfigEditor = () => {
   const { config, setConfig } = useContext(AppContext);
@@ -54,15 +57,15 @@ const ConfigEditor = () => {
     setProcessedRecords(0);
     setSaving(false);
     setSavingStep(null);
-    setError(null);
   };
 
-  const save = () => {
+  const save = async () => {
     try {
       const c = JSON.parse(configS);
       if (c) {
         setConfig(c);
-        recalc();
+        setError(null);
+        await recalc();
       }
     } catch (err) {
       setError(err);
@@ -74,17 +77,23 @@ const ConfigEditor = () => {
     [initialConfigS, configS]
   );
 
+  const resetConfiguration = () => {
+    setConfig(DEFAULT_CONFIG);
+  };
+  const [resetConfirmOpen, setResetConfirmOpen] = useState<boolean>(false);
+  const startResetConfiguration = () => setResetConfirmOpen(true);
   const renderedHeader = useMemo(() => {
     const processedRecordsPerc =
       totalRecordsToProcess === -1
         ? -1
         : Math.round((processedRecords / totalRecordsToProcess) * 100);
+
     return (
       <header className="pv-2">
         <div className="df fsb fcv">
           <div className="df">
             <Typography component="h1" variant="h5">
-              Config editor
+              Configuration
             </Typography>
           </div>
           <div className="editor-controls">
@@ -95,6 +104,13 @@ const ConfigEditor = () => {
             >
               <span>Save configuration</span>
             </Button>
+            <IconButton
+              onClick={startResetConfiguration}
+              size="medium"
+              title="Reset configuration"
+            >
+              <Replay />
+            </IconButton>
           </div>
         </div>
         {saving && (
@@ -123,7 +139,15 @@ const ConfigEditor = () => {
   ]);
 
   return (
-    <div className="config-editor mb-4">
+    <div className="config-editor mb-8">
+      <ConfirmDialog
+        onClose={() => setResetConfirmOpen(false)}
+        onConfirm={() => {
+          resetConfiguration();
+        }}
+        shown={resetConfirmOpen}
+        text="Do you really want to reset configuration to it's original state?"
+      />
       {renderedHeader}
       {error !== null && <FormHelperText error>{error.message}</FormHelperText>}
       <TextField
@@ -142,25 +166,51 @@ const ConfigEditor = () => {
   );
 };
 
-const logsPerPage = 20;
-const columns = [
-  { field: "created", headerName: "Date", width: 150 },
-  { field: "msg", headerName: "Message", width: 400 },
+const logsPerPage = 10;
+const columns: GridColumns = [
+  {
+    field: "created",
+    headerName: "Date",
+    width: 140,
+    align: "left",
+    headerAlign: "left",
+  },
+  {
+    field: "msg",
+    headerName: "Message",
+    flex: 100,
+    align: "left",
+    headerAlign: "left",
+    sortable: false,
+  },
 ];
 
 const LogsDisplay = () => {
   const [logs, setLogs] = useState<UserLogMessage[]>([]);
-  const fetchLogs = async (timestamp: Date) => {
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [totalLogs, setTotalLogs] = useState(0);
+  const fetchLogs = async (timestamp: Date, page: number) => {
+    setLoading(true);
     const result = await UserLog.query()
       .byIndex("created")
+      .offset(logsPerPage * page)
       .from(timestamp)
       .take(logsPerPage)
       .all();
     setLogs(result);
+    setLoading(false);
   };
 
   useEffect(() => {
-    fetchLogs(new Date(0));
+    fetchLogs(new Date(0), page);
+  }, [page]);
+
+  useEffect(() => {
+    (async () => {
+      const total = await UserLog.query().count();
+      setTotalLogs(total);
+    })();
   }, []);
 
   const clearLogs = () => {
@@ -170,17 +220,36 @@ const LogsDisplay = () => {
     })();
   };
 
+  const rows = useMemo(
+    () => logs.map((log) => ({ ...log, created: dateToString(log.created) })),
+    [logs]
+  );
+
   const logsRendered = useMemo(() => {
-    if (logs === null) return [];
-    if (logs.length === 0) {
+    if (rows.length === 0 && !loading) {
       return <div className="pv-8">No logs found</div>;
     }
     return (
       <div className="logs-list">
-        <DataGrid rows={logs} columns={columns} checkboxSelection />
+        <DataGrid
+          disableSelectionOnClick
+          rows={rows}
+          columns={columns}
+          page={page}
+          rowHeight={60}
+          onPageChange={(newPage) => setPage(newPage)}
+          pageSize={logsPerPage}
+          rowsPerPageOptions={[logsPerPage]}
+          pagination
+          paginationMode="server"
+          autoHeight
+          rowCount={totalLogs}
+          density="compact"
+          loading={loading}
+        />
       </div>
     );
-  }, [logs]);
+  }, [loading, rows, totalLogs, page]);
 
   return (
     <div className="logs">
@@ -214,7 +283,7 @@ const OptionsPage = () => {
             <Breadcrumbs aria-label="breadcrumb">
               <Link href={paths.DASHBOARD_PAGE}>Dashboard</Link>
             </Breadcrumbs>
-            <Typography component="h1" variant="h3">
+            <Typography component="h1" variant="h4">
               Options
             </Typography>
             <ConfigEditor />

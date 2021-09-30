@@ -148,7 +148,7 @@ const Dashboard = (props: { page: number }) => {
       <FileSelector onSelected={onImportData} ref={fileSelector} />
       <Page title="Activity Dashboard" className="dashboard">
         <header className="header df fsb">
-          <Typography component="h1" variant="h3">
+          <Typography component="h1" variant="h4">
             My Activity
           </Typography>
           <div className="dashboard-controls fcv">

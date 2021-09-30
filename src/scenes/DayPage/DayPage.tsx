@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState, useContext } from "react";
 import Page from "~/components/Page";
 import { TrackInfoRecord, allRecordsForDay } from "~/trackedRecord";
-import { Tabs, Tab, Typography } from "~/theme";
+import { Size, Tabs, Tab, Typography } from "~/theme";
 import AppContext from "~/AppContext";
 import { calcProductivityLevelForDay } from "~/util";
 import { dateToString } from "~/dates";
@@ -50,11 +50,15 @@ const DayPage = (props: DayPageProps) => {
     () => calcProductivityLevelForDay(config, records),
     [config, records]
   );
+  const [loading, setLoading] = useState(false);
+  const refresh = async () => {
+    setLoading(true);
+    const res = await allRecordsForDay(dayDate);
+    setRecords(res);
+    setLoading(false);
+  };
   useEffect(() => {
-    (async () => {
-      const res = await allRecordsForDay(dayDate);
-      setRecords(res);
-    })();
+    refresh();
   }, []);
   const [currTab, setCurrTab] = useLocalStorageState<number>("day-page-tab", 0);
 
@@ -66,11 +70,16 @@ const DayPage = (props: DayPageProps) => {
     <Page title={`${year}/${month}/${day}`} className="day-page">
       <Breadcrumbs />
       <div className="mb-2">
-        <Typography component="h1" variant="h4">
+        <Typography component="h1" variant="h5">
           {dateToString(dayDate)}
         </Typography>
       </div>
-      <ProductivityLevel level={prodLevel} config={config} className="mb-2" />
+      <ProductivityLevel
+        size={Size.Large}
+        level={prodLevel}
+        config={config}
+        className="mb-2"
+      />
       <Tabs
         value={currTab}
         onChange={handleChange}
@@ -88,7 +97,7 @@ const DayPage = (props: DayPageProps) => {
         <Tab className="day-page-tab" label="Graph" {...a11yProps(2)} />
       </Tabs>
       <TabPanel value={currTab} index={0}>
-        <FullDayLog records={records} />
+        <FullDayLog loading={loading} records={records} refresh={refresh} />
       </TabPanel>
       <TabPanel value={currTab} index={1}>
         <TopSites records={records} />

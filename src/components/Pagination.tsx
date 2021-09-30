@@ -18,6 +18,7 @@ const NumButton = (props: {
       key={props.n}
       onClick={() => props.onChange(props.n)}
       variant={props.selected ? "outlined" : undefined}
+      style={{ marginRight: 4 }}
     >
       {props.n}
     </Button>

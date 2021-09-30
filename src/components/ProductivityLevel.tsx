@@ -1,11 +1,18 @@
 import React, { useState } from "react";
 import { Configuration } from "~/configuration";
 import { getProdPerc } from "~/util";
-import { Tooltip, useTheme } from "~/theme";
+import { Size, Tooltip, useTheme } from "~/theme";
+
+const sizeToWidth = {
+  [Size.Small]: 8,
+  [Size.Medium]: 16,
+  [Size.Large]: 24,
+};
 
 const ProductivityLevel = (props: {
   config: Configuration<any>;
   level: number;
+  size: Size;
   className?: string;
 }) => {
   const { config, level } = props;
@@ -17,6 +24,7 @@ const ProductivityLevel = (props: {
   });
   const handleClose = () => setTooltipState({ shown: false });
   const handleOpen = () => setTooltipState({ shown: true });
+  const thickness = sizeToWidth[props.size];
   return (
     <Tooltip
       placement="bottom-start"
@@ -29,6 +37,8 @@ const ProductivityLevel = (props: {
         className={`${props.className} prod-level-bar`}
         style={{
           background: `linear-gradient(75deg, ${prodBarLowColor}, ${prodBarHighColor}`,
+          height: thickness,
+          flex: `0 0 ${thickness}`,
         }}
         onMouseOver={(e) => {
           e.stopPropagation();

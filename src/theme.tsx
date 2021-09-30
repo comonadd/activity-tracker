@@ -3,7 +3,6 @@ export { default as IconButton } from "@material-ui/core/IconButton";
 export { default as Accordion } from "@material-ui/core/Accordion";
 export { default as Grid } from "@material-ui/core/Grid";
 export { default as AccordionSummary } from "@material-ui/core/AccordionSummary";
-export { default as Breadcrumbs } from "@material-ui/core/Breadcrumbs";
 export { default as Card } from "@material-ui/core/Card";
 export { default as CardActions } from "@material-ui/core/CardActions";
 export { default as CardHeader } from "@material-ui/core/CardHeader";
@@ -27,6 +26,7 @@ import {
   useTheme as useMuiTheme,
   createTheme,
   ThemeProvider,
+  styled,
 } from "@material-ui/core/styles";
 import { Theme } from "@material-ui/core/styles";
 import React from "react";
@@ -63,3 +63,15 @@ export const AppThemeProvider = (props: { children: React.ReactElement }) => {
 
 // Colors
 export const DEFAULT_ACTIVITY_COLOR = "#00ff00";
+
+export enum Size {
+  Small = 0,
+  Medium = 1,
+  Large = 2,
+}
+
+import MUIBreadcrumbs from "@material-ui/core/Breadcrumbs";
+
+export const Breadcrumbs = styled(MUIBreadcrumbs)({
+  fontSize: 14,
+});

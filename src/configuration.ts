@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { DEFAULT_CONFIG } from "~/constants";
 import AppContext from "~/AppContext";
+export { DEFAULT_CONFIG } from "~/constants";
 
 export type ActivityType = string | null;
 export interface ActivityDesc {
@@ -23,7 +24,7 @@ export type Configuration<AK extends ActTypeKey> = {
   prodUpperBound: number;
   // urls to ignore completely
   urlIgnorePattern: string;
-  // activity to color mapping (used in graphs)
+  // activity type to color mapping (used in graphs)
   activityColors: Record<AK, string>;
 };
 

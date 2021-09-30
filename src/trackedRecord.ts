@@ -5,6 +5,7 @@ import { calculateUrlType, ActivityType, Configuration } from "~/configuration";
 import { DbHandle, db, createIDBEntity } from "~/db";
 
 export interface TrackInfoRecord {
+  id: number;
   url: string;
   created: Date;
   type: ActivityType;
@@ -18,7 +19,7 @@ export type TrackedDay = {
 
 export type TrackedRecordsGrouped = Map<number, TrackInfoRecord[]>;
 
-const DUR_MAX_BETWEEN_TWO_POINTS = durationHours(1);
+const DUR_MAX_BETWEEN_TWO_POINTS = durationHours(2);
 
 export const recDurationAtIndex = (
   records: TrackInfoRecord[],
@@ -33,17 +34,17 @@ export const recDurationAtIndex = (
 };
 
 // Single record = one visit to a particular URL
-export const TrackedRecord = createIDBEntity<TrackInfoRecord, "created">(
+export const TrackedRecord = createIDBEntity<TrackInfoRecord, "id">(
   db,
   TRACK_INFO_STORE_NAME,
-  "created"
+  "id"
 );
 
-export const addTrackedItem = async (item: TrackInfoRecord) => {
+export const addTrackedItem = async (item: Omit<TrackInfoRecord, "id">) => {
   await TrackedRecord.create(item);
 };
 
-export const addTrackedItems = async (items: TrackInfoRecord[]) =>
+export const addTrackedItems = async (items: Omit<TrackInfoRecord, "id">[]) =>
   await TrackedRecord.createMany(items);
 
 const getRecordsInRange = async (
@@ -155,7 +156,7 @@ export const recalculateRecordTypes = async function* (
   const tx = await TrackedRecord.createTransaction("readwrite");
   for (const rec of allRecords) {
     await TrackedRecord.replace(
-      rec.created,
+      rec.id,
       {
         ...rec,
         type: calculateUrlType(config, rec.url),

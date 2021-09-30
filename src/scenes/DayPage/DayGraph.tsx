@@ -292,12 +292,14 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
         </div>
       </div>
       <svg ref={container} viewBox={`0 0 ${renderWidth} ${renderHeight}`}>
-        <g transform={`translate(${margin.left},${margin.top})`}>
+        <g transform={`translate(${margin.left}, ${margin.top})`}>
           <Axes x={x} y={y} height={height} />
-          {showGroups && (
-            <SiteGroupCols x={x} y={y} data={data} height={height} />
-          )}
-          <ProdLine x={x} y={y} data={data} />
+          <g transform={`translate(${margin.left}, 0)`}>
+            {showGroups && (
+              <SiteGroupCols x={x} y={y} data={data} height={height} />
+            )}
+            <ProdLine x={x} y={y} data={data} />
+          </g>
         </g>
       </svg>
     </div>

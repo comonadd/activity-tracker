@@ -25,7 +25,7 @@ interface HistoryCalendarProps {}
 
 // TODO: Move this to configuration
 const lowColor: RGB = { r: 250, g: 250, b: 250 };
-const highColor: RGB = { r: 224, g: 255, b: 79 };
+const highColor: RGB = { r: 209, g: 123, b: 15 };
 const highColorBound = 255;
 const highProbBound = 1000;
 const lowProbBound = 0;
@@ -101,7 +101,7 @@ const HistoryCalendar = (_: HistoryCalendarProps) => {
     trackedRecordFetcher,
     {
       reversed: true,
-      perPage: 30,
+      perPage: 60,
     }
   );
   const trackedRecords = trackedRecordsP.data;

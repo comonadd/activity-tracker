@@ -25,8 +25,6 @@ html,
 .prod-level-bar {
   background: white;
   width: 100%;
-  height: var(--prod-level-width);
-  flex: 0 0 var(--prod-level-width);
   border: 1px solid #eee;
   display: flex;
   flex-direction: row-reverse;
@@ -58,7 +56,7 @@ html,
   width: 100%;
   box-sizing: border-box;
   align-items: center;
-  background: #e6e6e6;
+  background: #f2f2f2;
 }
 
 .page {
@@ -75,6 +73,12 @@ html,
   border-bottom-width: 0;
   background: #ffffff;
   overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.page::-webkit-scrollbar {
+  display: hidden;
+  width: 0;
 }
 
 @media screen and (max-width: 1200px) {
@@ -122,6 +126,10 @@ html,
 }
 
 .mb-4 {
+  margin-bottom: 8px;
+}
+
+.mb-8 {
   margin-bottom: 16px;
 }
 
