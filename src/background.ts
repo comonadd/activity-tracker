@@ -16,6 +16,7 @@ const state: TrackerState = {
 };
 
 const shouldIgnoreUrl = (url: string) => {
+  if (!state.config.urlIgnorePattern) return false;
   const rxp = new RegExp(state.config.urlIgnorePattern);
   return rxp.test(url);
 };
@@ -23,9 +24,9 @@ const shouldIgnoreUrl = (url: string) => {
 const trackUrl = async (url: string) => {
   if (shouldIgnoreUrl(url)) return;
   const t = calculateUrlType(state.config, url);
-  const uu = new URL(url);
-  url = uu.origin + uu.pathname;
   if (t === null) {
+    const uu = new URL(url);
+    url = uu.origin + uu.pathname;
     await reportNoActivityMatcher(url);
   }
   const item = {

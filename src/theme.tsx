@@ -21,6 +21,7 @@ export { default as Tabs } from "@material-ui/core/Tabs";
 export { default as Tab } from "@material-ui/core/Tab";
 export { default as Link } from "@material-ui/core/Link";
 export { default as Tooltip } from "@material-ui/core/Tooltip";
+export { default as CircularProgress } from "@material-ui/core/CircularProgress";
 export { default as Checkbox } from "@material-ui/core/Checkbox";
 import {
   useTheme as useMuiTheme,
@@ -32,14 +33,24 @@ import { Theme } from "@material-ui/core/styles";
 import React from "react";
 import { Configuration } from "~/configuration";
 import AppContext from "~/AppContext";
+import { RGB } from "~/util";
 
 interface AppTheme extends Theme {
   prodGraphFillColor: string;
   prodBarLowColor: string;
   prodBarHighColor: string;
+  lowColor: RGB;
+  highColor: RGB;
 }
 
 export const useTheme = (): AppTheme => useMuiTheme() as any as AppTheme;
+
+const hexToRGB = (hex: string): RGB => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { r, g, b };
+};
 
 const muiThemeFromConfig = (config: Configuration<any>) =>
   createTheme({
@@ -51,6 +62,8 @@ const muiThemeFromConfig = (config: Configuration<any>) =>
     prodGraphFillColor: "#264653",
     prodBarLowColor: "#e0ff4f",
     prodBarHighColor: "#00272b",
+    lowColor: hexToRGB("#f8f8f8"),
+    highColor: hexToRGB("#e9c46a"),
   } as any) as AppTheme;
 
 export const AppThemeProvider = (props: { children: React.ReactElement }) => {

@@ -7,7 +7,7 @@ import { AxisDomain, AxisScale, axisBottom } from "d3-axis";
 import { axisLeft } from "d3";
 import { recordProd } from "~/util";
 import { useLocalStorageState } from "~/hooks";
-import { addDurationToDate } from "~/dates";
+import { dateFormatHMS, addDurationToDate } from "~/dates";
 import { TIME_PRECISION_POINT } from "~/constants";
 import {
   useTheme,
@@ -15,20 +15,23 @@ import {
   Checkbox,
   Tooltip,
   DEFAULT_ACTIVITY_COLOR,
+  CircularProgress,
 } from "~/theme";
 import { useAppConfigPart } from "~/configuration";
 
 const renderWidth = 900;
 const renderHeight = 500;
-const margin = { top: 10, right: 30, bottom: 30, left: 30 };
+const margin = { top: 10, right: 10, bottom: 30, left: 10 };
 const strokeWidth = 1;
 
 const Axes = (props: {
   x: AxisScale<AxisDomain>;
   y: AxisScale<AxisDomain>;
   height: number;
+  width: number;
+  labelWidth: number;
 }) => {
-  const { x, y, height } = props;
+  const { labelWidth, x, y, height, width } = props;
   const axisBottomRef = useRef(null);
   const axisLeftRef = useRef(null);
   useEffect(() => {
@@ -39,14 +42,22 @@ const Axes = (props: {
   }, []);
   return (
     <>
+      <text
+        transform={`translate(${margin.left}, ${height / 2}),rotate(-90)`}
+        style={{ textAnchor: "middle" }}
+      >
+        Productivity
+      </text>
       <g
         className="axis axis--y"
-        transform={`translate(0, 0)`}
+        transform={`translate(${margin.left + labelWidth}, ${margin.top})`}
         ref={axisLeftRef}
       />
       <g
         className="axis axis--x"
-        transform={`translate(0, ${height})`}
+        transform={`translate(${margin.left + labelWidth}, ${
+          margin.top + height
+        })`}
         ref={axisBottomRef}
       />
     </>
@@ -224,27 +235,34 @@ const SiteGroupCols = (props: {
   );
 };
 
-const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
+const DayGraph = (props: {
+  loading: boolean;
+  dayDate: Date;
+  records: TrackInfoRecord[];
+}) => {
   const { config } = useContext(AppContext);
   const { dayDate } = props;
   const container = React.useRef(null);
 
   const data: DataItem[] = useMemo(() => {
     if (props.records.length === 0) return [];
-    const actualData = props.records.map((r, idx) => {
-      const nextItem =
-        idx != props.records.length - 1 ? props.records[idx + 1] : null;
-      const nextCreated =
-        nextItem !== null
-          ? nextItem.created
-          : new Date(r.created.getTime() + 1000);
-      return {
-        x0: r.created,
-        x1: nextCreated,
-        length: recordProd(config, r),
-        rec: r,
-      };
-    });
+    const actualData = props.records
+      .map((r, idx) => {
+        const nextItem =
+          idx != props.records.length - 1 ? props.records[idx + 1] : null;
+        const nextCreated =
+          nextItem !== null
+            ? nextItem.created
+            : new Date(r.created.getTime() + 1000);
+        return {
+          x0: r.created,
+          x1: nextCreated,
+          length: recordProd(config, r),
+          rec: r,
+        };
+      })
+      .filter((a) => a.length !== 0);
+    if (actualData.length === 0) return [];
     const firstItem = actualData[0];
     const lastItem = actualData[actualData.length - 1];
     return [
@@ -268,8 +286,9 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
   const dayEnd = new Date(dayDate.getTime() + 24 * 60 * 60 * 1000);
   const width = renderWidth - margin.left - margin.right;
   const height = renderHeight - margin.top - margin.bottom;
-  const minHeight = d3.min(data, (d) => d.length);
-  const maxHeight = d3.max(data, (d) => d.length) + 20;
+  const minHeight = config.prodLowerBound;
+  const mH = d3.max(data, (d) => d.length);
+  const maxHeight = Math.max(5, mH + mH * 0.2);
   const x = scaleTime().domain([dayStart, dayEnd]).range([0, width]);
   const y = scaleLinear().domain([minHeight, maxHeight]).range([height, 0]);
 
@@ -278,11 +297,15 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
     false
   );
 
-  if (data.length === 0) return null;
+  const labelWidth = 20;
+  const dataLeftMargin = margin.left + labelWidth;
 
   return (
     <div className="day-graph">
-      <div className="df frr w-100">
+      <div className="df fsb w-100">
+        <Typography component="h1" variant="h5">
+          Graph
+        </Typography>
         <div className="df fcv">
           <Typography variant="subtitle2">Show groups</Typography>
           <Checkbox
@@ -291,15 +314,34 @@ const DayGraph = (props: { dayDate: Date; records: TrackInfoRecord[] }) => {
           />
         </div>
       </div>
-      <svg ref={container} viewBox={`0 0 ${renderWidth} ${renderHeight}`}>
-        <g transform={`translate(${margin.left}, ${margin.top})`}>
-          <Axes x={x} y={y} height={height} />
-          <g transform={`translate(${margin.left}, 0)`}>
-            {showGroups && (
-              <SiteGroupCols x={x} y={y} data={data} height={height} />
-            )}
-            <ProdLine x={x} y={y} data={data} />
-          </g>
+      <svg
+        ref={container}
+        viewBox={`0 0 ${renderWidth + dataLeftMargin} ${renderHeight}`}
+      >
+        <Axes
+          x={x}
+          y={y}
+          height={height}
+          width={width}
+          labelWidth={labelWidth}
+        />
+        <g transform={`translate(${dataLeftMargin}, ${margin.top})`}>
+          {props.loading ? (
+            <CircularProgress />
+          ) : data.length === 0 ? (
+            <text
+              style={{ textAnchor: "middle" }}
+              transform={`translate(${margin.left + width / 2}, ${height / 2})`}
+              className="fs-12"
+            >{`No data available (do you have matchers configured?)`}</text>
+          ) : (
+            <>
+              {showGroups && (
+                <SiteGroupCols x={x} y={y} data={data} height={height} />
+              )}
+              <ProdLine x={x} y={y} data={data} />
+            </>
+          )}
         </g>
       </svg>
     </div>

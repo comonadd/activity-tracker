@@ -34,8 +34,13 @@ const TopSites = (props: { records: TrackInfoRecord[] }) => {
     let totalProd = 0;
     const grouped: DefaultMap<string, TopSiteRecord> = props.records.reduce(
       (acc, rec, idx) => {
-        const duration = recDurationAtIndex(props.records, idx);
-        const site = new URL(rec.url).host;
+        const duration = recDurationAtIndex(props.records, idx, null);
+        let site;
+        try {
+          site = new URL(rec.url).host;
+        } catch (err) {
+          site = rec.url;
+        }
         const rr = acc.get(site);
         rr.timeSpent = duration !== null ? durAdd(rr.timeSpent, duration) : 0;
         const lprod = recordProd(config, rec);
@@ -85,7 +90,7 @@ const TopSites = (props: { records: TrackInfoRecord[] }) => {
         <div className="top-sites-entry" key={siteName}>
           <div className="df">
             <Tooltip
-              title={info.type}
+              title={info.type !== null ? info.type : "Not configured"}
               open={ts[siteName] ?? false}
               onClose={() => handleClose(siteName)}
               onOpen={() => handleOpen(siteName)}

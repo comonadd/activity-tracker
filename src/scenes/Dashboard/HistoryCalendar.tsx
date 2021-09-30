@@ -6,7 +6,7 @@ import {
   rgbToCSS,
 } from "~/util";
 import { dateToString, monthName, monthAndYear } from "~/dates";
-import { Typography, Paper } from "~/theme";
+import { useTheme, Typography, Paper } from "~/theme";
 import React from "react";
 import AppContext from "~/AppContext";
 import { history } from "~/routeManager";
@@ -23,13 +23,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 
 interface HistoryCalendarProps {}
 
-// TODO: Move this to configuration
-const lowColor: RGB = { r: 250, g: 250, b: 250 };
-const highColor: RGB = { r: 209, g: 123, b: 15 };
 const highColorBound = 255;
-const highProbBound = 1000;
-const lowProbBound = 0;
-const rangeK = highColorBound / highProbBound;
 
 const CalendarDay = (props: {
   config: Configuration<any>;
@@ -37,6 +31,8 @@ const CalendarDay = (props: {
   d: number;
 }) => {
   const { config, d, records } = props;
+  const { lowColor, highColor } = useTheme();
+  const rangeK = highColorBound / config.prodUpperBound;
   const dayDate = new Date(d);
   const year = dayDate.getFullYear();
   const month = dayDate.getMonth() + 1;
@@ -44,8 +40,8 @@ const CalendarDay = (props: {
   // shrink productivity level into a color between lowColorBound and highColorBound
   let productivityLevel = calcProductivityLevelForDay(config, records);
   productivityLevel = Math.min(
-    Math.max(productivityLevel, lowProbBound),
-    highProbBound
+    Math.max(productivityLevel, config.prodLowerBound),
+    config.prodUpperBound
   );
   const pK = rangeK * productivityLevel;
   const pPerc = pK / highColorBound;

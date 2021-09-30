@@ -169,3 +169,16 @@
 .MuiDataGrid-window {
   overflow-x: auto;
 }
+
+.day-log {
+  height: 100%;
+  flex: 1 1 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.day-log-controls {
+  position: absolute;
+  top: -40px;
+  right: 0;
+}

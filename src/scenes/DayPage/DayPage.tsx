@@ -24,7 +24,7 @@ const TabPanel = (props: {
   children: React.ReactElement;
 }) => {
   return (
-    <div className="tab-container h-100" hidden={props.index !== props.value}>
+    <div className="tab-container" hidden={props.index !== props.value}>
       {props.children}
     </div>
   );
@@ -50,7 +50,7 @@ const DayPage = (props: DayPageProps) => {
     () => calcProductivityLevelForDay(config, records),
     [config, records]
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const refresh = async () => {
     setLoading(true);
     const res = await allRecordsForDay(dayDate);
@@ -78,7 +78,7 @@ const DayPage = (props: DayPageProps) => {
         size={Size.Large}
         level={prodLevel}
         config={config}
-        className="mb-2"
+        className="mb-2 f-sauto"
       />
       <Tabs
         value={currTab}
@@ -96,15 +96,19 @@ const DayPage = (props: DayPageProps) => {
         />
         <Tab className="day-page-tab" label="Graph" {...a11yProps(2)} />
       </Tabs>
-      <TabPanel value={currTab} index={0}>
-        <FullDayLog loading={loading} records={records} refresh={refresh} />
-      </TabPanel>
-      <TabPanel value={currTab} index={1}>
-        <TopSites records={records} />
-      </TabPanel>
-      <TabPanel value={currTab} index={2}>
-        <DayGraph dayDate={dayDate} records={records} />
-      </TabPanel>
+      {currTab === 0 ? (
+        <TabPanel value={currTab} index={0}>
+          <FullDayLog loading={loading} records={records} refresh={refresh} />
+        </TabPanel>
+      ) : currTab === 1 ? (
+        <TabPanel value={currTab} index={1}>
+          <TopSites records={records} />
+        </TabPanel>
+      ) : currTab === 2 ? (
+        <TabPanel value={currTab} index={2}>
+          <DayGraph loading={loading} dayDate={dayDate} records={records} />
+        </TabPanel>
+      ) : null}
     </Page>
   );
 };

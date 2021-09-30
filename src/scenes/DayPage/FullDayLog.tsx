@@ -7,7 +7,7 @@ import {
 import { dateFormatHMS } from "~/dates";
 import { DataGrid, GridAlignment } from "@mui/x-data-grid";
 import { formatDistance } from "date-fns";
-import { Button } from "~/theme";
+import { Typography, Button } from "~/theme";
 
 const columns = [
   { field: "url", headerName: "Site", flex: 1, sortable: false },
@@ -22,7 +22,7 @@ const columns = [
   {
     field: "duration",
     headerName: "Duration",
-    width: 140,
+    width: 180,
     headerAlign: "left" as GridAlignment,
     align: "left" as GridAlignment,
   },
@@ -38,16 +38,18 @@ const FullDayLog = (props: {
   const rows = React.useMemo(
     () =>
       records.map((rec, idx) => {
-        const nextRow = idx !== records.length - 1 ? records[idx + 1] : null;
-        const duration = recDurationAtIndex(props.records, idx);
-        const durationD = new Date(duration);
+        const duration = recDurationAtIndex(props.records, idx, null);
+        const durS =
+          duration !== null
+            ? formatDistance(0, duration, {
+                includeSeconds: true,
+              })
+            : "N/A";
         return {
           ...rec,
           created: dateFormatHMS(rec.created),
           id: rec.id,
-          duration: formatDistance(0, duration, {
-            includeSeconds: true,
-          }),
+          duration: durS,
         };
       }),
     [records]
@@ -59,8 +61,15 @@ const FullDayLog = (props: {
   };
   return (
     <div className="day-log">
-      <div className="df frr mb-4">
-        <Button disabled={selectionModel.length === 0} onClick={deleteSelected}>
+      <div className="df mb-4 fsb">
+        <Typography component="h1" variant="h5">
+          History
+        </Typography>
+        <Button
+          disabled={selectionModel.length === 0}
+          onClick={deleteSelected}
+          size="large"
+        >
           Delete
         </Button>
       </div>
