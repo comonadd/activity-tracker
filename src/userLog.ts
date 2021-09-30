@@ -29,3 +29,10 @@ export const clearUserLogs = async () => {
   const tx = (await db).transaction(USER_LOG_STORE_NAME, "readwrite");
   await tx.store.clear();
 };
+
+export const reportNoActivityMatcher = async (url: string) => {
+  await saveUserLogMessage({
+    type: UserLogMessageType.Warning,
+    msg: `No activity matcher for path found: "${url}"`,
+  });
+};

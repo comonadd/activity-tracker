@@ -1,6 +1,6 @@
 import { DEFAULT_CONFIG } from "./constants";
 import { Configuration, calculateUrlType } from "~/configuration";
-import { UserLogMessageType, saveUserLogMessage } from "~/userLog";
+import { reportNoActivityMatcher } from "~/userLog";
 import { addTrackedItem } from "~/trackedRecord";
 import { DbHandle, openIDB } from "./db";
 import extAPI from "./extAPI";
@@ -26,10 +26,7 @@ const trackUrl = async (url: string) => {
   const uu = new URL(url);
   url = uu.origin + uu.pathname;
   if (t === null) {
-    saveUserLogMessage({
-      type: UserLogMessageType.Warning,
-      msg: `No activity matcher for path found: "${url}"`,
-    });
+    await reportNoActivityMatcher(url);
   }
   const item = {
     url,

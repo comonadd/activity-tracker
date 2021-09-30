@@ -5,6 +5,7 @@ import {
   Configuration,
 } from "~/configuration";
 import { TrackInfoRecord, addTrackedItems } from "./trackedRecord";
+import { reportNoActivityMatcher } from "./userLog";
 import { useEffect, useState } from "react";
 import extAPI from "./extAPI";
 import { dateAddDays, dateAddHours } from "~/dates";
@@ -48,7 +49,7 @@ export function generateRandomRecords<AK extends ActTypeKey>(
   nDays: number,
   nRecordsPerDay: number,
   dateStart: Date
-): TrackInfoRecord[] {
+): Omit<TrackInfoRecord, "id">[] {
   const records = [];
   const hoursPerRecord = 24 / nRecordsPerDay;
   const dateStartDay = new Date(
@@ -90,6 +91,11 @@ export async function populateStorageWithRandomData<AK extends ActTypeKey>(
   const startDate = randomDateBetween(new Date(2000, 0, 0), new Date());
   const randomRecords = generateRandomRecords(config, 1200, 50, startDate);
   await addTrackedItems(randomRecords);
+  await Promise.all(
+    new Array(100).fill(null).map(async () => {
+      await reportNoActivityMatcher(randomUrl());
+    })
+  );
 }
 
 export function rewardForActivityType<AK extends ActTypeKey>(
