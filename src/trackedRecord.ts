@@ -9,6 +9,7 @@ export interface TrackInfoRecord {
   url: string;
   created: Date;
   type: ActivityType;
+  duration: number;
 }
 
 export type TrackedDay = {
@@ -23,14 +24,10 @@ const DUR_MAX_BETWEEN_TWO_POINTS = durationHours(2);
 
 export const recDurationAtIndex = (
   records: TrackInfoRecord[],
-  idx: number
+  idx: number,
+  if_not_known: Duration = TIME_PRECISION_POINT
 ): Duration => {
-  const rec = records[idx];
-  const nextRow = idx !== records.length - 1 ? records[idx + 1] : null;
-  const duration: Duration | null = nextRow
-    ? dateDiff(nextRow.created, rec.created)
-    : TIME_PRECISION_POINT;
-  return Math.min(duration, DUR_MAX_BETWEEN_TWO_POINTS);
+  return records[idx].duration;
 };
 
 // Single record = one visit to a particular URL
@@ -41,11 +38,19 @@ export const TrackedRecord = createIDBEntity<TrackInfoRecord, "id">(
 );
 
 export const addTrackedItem = async (item: Omit<TrackInfoRecord, "id">) => {
+  const lastRec = await TrackedRecord.query().byIndex("created").desc().one();
+  if (lastRec !== null) {
+    await TrackedRecord.update(lastRec.id, {
+      ...lastRec,
+      duration: dateDiff(item.created, lastRec.created),
+    });
+  }
   await TrackedRecord.create(item);
 };
 
-export const addTrackedItems = async (items: Omit<TrackInfoRecord, "id">[]) =>
+export const addTrackedItems = async (items: Omit<TrackInfoRecord, "id">[]) => {
   await TrackedRecord.createMany(items);
+};
 
 const getRecordsInRange = async (
   db: DbHandle,

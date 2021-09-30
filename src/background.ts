@@ -32,6 +32,7 @@ const trackUrl = async (url: string) => {
     url,
     created: new Date(),
     type: t,
+    duration: 0,
   };
   await addTrackedItem(item);
 };

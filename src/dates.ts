@@ -65,3 +65,5 @@ export const monthAndYear = (date: Date) =>
 
 export const addDurationToDate = (date: Date, dur: Duration): Date =>
   new Date(date.getTime() + dur);
+
+export const durToHours = (dur: Duration) => dur / 1000 / 60 / 60;

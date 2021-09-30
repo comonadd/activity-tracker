@@ -19,7 +19,7 @@ type DAT =
 export const DEFAULT_ACTIVITY_TYPES: ActivityTypesMapping<DAT> = {
   workRelated: {
     description: "Important work stuff",
-    reward: 100,
+    reward: 100, // per hour
   },
   properEntertainment: {
     description: "Good kind of entertainment: film, TV, music",
@@ -31,7 +31,7 @@ export const DEFAULT_ACTIVITY_TYPES: ActivityTypesMapping<DAT> = {
   },
   reading: {
     description: "Reading stuff",
-    reward: 10,
+    reward: 60,
   },
   searching: {
     description: "Searching stuff",

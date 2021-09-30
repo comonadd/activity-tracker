@@ -8,7 +8,7 @@ import { TrackInfoRecord, addTrackedItems } from "./trackedRecord";
 import { reportNoActivityMatcher } from "./userLog";
 import { useEffect, useState } from "react";
 import extAPI from "./extAPI";
-import { dateAddDays, dateAddHours } from "~/dates";
+import { durToHours, dateDiff, dateAddDays, dateAddHours } from "~/dates";
 
 const URL_SELECTION = [
   "https://news.ycombinator.com",
@@ -63,11 +63,17 @@ export function generateRandomRecords<AK extends ActTypeKey>(
       const url = randomUrl() + randomUrlPath();
       const date = dateAddHours(dds, hoursPerRecord * r);
       const t = calculateUrlType(config, url);
+      const prevRec: any =
+        records.length > 0 ? records[records.length - 1] : null;
+      if (prevRec !== null) {
+        prevRec.duration = dateDiff(date, prevRec.created);
+      }
       if (t !== null) {
         records.push({
           created: date,
           url,
           type: t,
+          duration: 0,
         });
       }
     }
@@ -113,7 +119,8 @@ export function recordProd<AK extends ActTypeKey>(
   config: Configuration<AK>,
   rec: TrackInfoRecord
 ): number {
-  return rewardForActivityType(config, rec.type);
+  const perHour = rewardForActivityType(config, rec.type);
+  return perHour * durToHours(rec.duration);
 }
 
 // Productivity is a measure of productive activity during the day. Ranges
@@ -124,7 +131,7 @@ export const calcProductivityLevelForDay = (
 ): number => {
   let prod = 0;
   for (const r of records) {
-    const reward = rewardForActivityType(config, r.type);
+    const reward = recordProd(config, r);
     prod += reward;
   }
   return prod;
@@ -161,7 +168,7 @@ export const getProdPerc = (
   config: Configuration<any>,
   prod: number
 ): number => {
-  return (prod / config.prodUpperBound) * 100;
+  return Math.min(Math.round((prod / config.prodUpperBound) * 100), 100);
 };
 
 export const downloadBlob = (blob: Blob, fileName: string): void => {
