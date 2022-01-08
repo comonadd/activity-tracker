@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 
 interface PaginatedController<T> {
   data: T[];
@@ -31,12 +31,13 @@ export function useCursorPaginatedController<T, C>(
   const [data, setData] = useState<T[]>([]);
   const [cursor, setCursor] = useState<C | null>(null);
   const [loadedEverything, setLoadedEverything] = useState<boolean>(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const initialItemsLoaded = useRef<boolean>(false);
   const fetchDataAndSaveCursor = useCallback(async () => {
     if (loadedEverything) {
       return;
     }
-    if (loading) {
+    if (loading && initialItemsLoaded.current) {
       return;
     }
     setLoading(true);
@@ -52,7 +53,10 @@ export function useCursorPaginatedController<T, C>(
     setLoading(false);
   }, [loading, loadedEverything, data, cursor]);
   useEffect(() => {
-    fetchDataAndSaveCursor();
+    (async () => {
+      await fetchDataAndSaveCursor();
+      initialItemsLoaded.current = true;
+    })();
   }, []);
   const loadMore = useCallback(() => {
     fetchDataAndSaveCursor();
@@ -90,7 +94,7 @@ export function usePagedPaginatedController<T>(
 ): PagedPaginatedController<T> {
   const startFrom = options?.startFrom ?? 0;
   const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState<number | null>(null);
   const [currentPage, setcurrentPage] = useState(startFrom);
   const lastPage = currentPage === totalPages;
