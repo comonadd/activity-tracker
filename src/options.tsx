@@ -281,10 +281,17 @@ const OptionsPage = () => {
       <AppThemeProvider>
         <div className="app">
           <Page title="Options" className="config-page">
-            <Breadcrumbs aria-label="breadcrumb">
-              <Link href={paths.DASHBOARD_PAGE}>Dashboard</Link>
-            </Breadcrumbs>
-            <Typography component="h1" variant="h4">
+            <BreadcrumbsForPath
+              path={[
+                {
+                  text: "Dashboard",
+                  path: paths.DASHBOARD_PAGE,
+                  external: true,
+                },
+                { text: "Options", path: "#", disabled: true },
+              ]}
+            />
+            <Typography component="h1" variant="h4" className="mb-4">
               Options
             </Typography>
             <ConfigEditor />

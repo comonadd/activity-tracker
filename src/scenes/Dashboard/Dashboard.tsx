@@ -26,6 +26,7 @@ import paths from "~/paths";
 import FileSelector from "~/components/FileSelector";
 import ConfirmDialog from "~/components/ConfirmDialog";
 import { useLocalStorageState } from "~/hooks";
+import BreadcrumbsForPath from "~/components/BreadcrumbsForPath";
 
 enum Mode {
   Calendar = 0,
@@ -147,6 +148,9 @@ const Dashboard = (props: { page: number }) => {
       />
       <FileSelector onSelected={onImportData} ref={fileSelector} />
       <Page title="Activity Dashboard" className="dashboard">
+        <BreadcrumbsForPath
+          path={[{ text: "Dashboard", path: "/", disabled: true }]}
+        />
         <header className="header df fsb">
           <Typography component="h1" variant="h4">
             My Activity
