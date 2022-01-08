@@ -32,12 +32,12 @@ const FullHistoryDay = (props: {
   const month = date.getMonth() + 1;
   const day = date.getDate();
   return (
-    <Card elevation={2} className="full-history-item">
+    <Card elevation={1} className="full-history-item">
       <CardContent className="full-history-item__content">
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Grid container spacing={1}>
-              <Grid item xs={10}>
+              <Grid item xs={10} xl={11}>
                 <Typography component="div" variant="h6">
                   {dateToString(date)}
                 </Typography>
@@ -47,13 +47,14 @@ const FullHistoryDay = (props: {
                   )}`}</span>
                 </div>
               </Grid>
-              <Grid item xs={2} className="df fcv frr">
+              <Grid item md={2} xl={1} className="df fcv frr">
                 <Button
                   onClick={() => {
                     history.push(`/${year}/${month}/${day}`);
                   }}
                   variant="outlined"
                   color="primary"
+                  className="w-100"
                   disableElevation
                 >
                   Details
@@ -130,7 +131,7 @@ const FullHistoryList = (props: { page: number }) => {
     }
     return (
       <div className="f-100 h-100">
-        <Grid container spacing={1} className="pv-8 ph-2">
+        <Grid container spacing={2} className="pv-8 ph-2">
           {allDayDates.map((d) => {
             const records = trackedRecordsGrouped.get(d);
             const day = new Date(d);

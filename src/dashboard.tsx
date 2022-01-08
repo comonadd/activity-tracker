@@ -1,9 +1,7 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom";
 import { useExtStorage, LStatus } from "./util";
 import { DEFAULT_CONFIG } from "./constants";
-import "./app.css";
-import "./dashboard.css";
 import {
   useLocation,
   matchLocation,
@@ -13,19 +11,30 @@ import {
 } from "./routeManager";
 import Page from "~/components/Page";
 import AppContext from "~/AppContext";
-import DayPage from "~/scenes/DayPage";
-import YearPage from "~/scenes/YearPage";
-import MonthPage from "~/scenes/MonthPage";
-import Dashboard from "~/scenes/Dashboard";
 import { Configuration } from "~/configuration";
-import { AppThemeProvider } from "~/theme";
-import "~/app.css";
-import "~/dashboard.css";
+import { AppThemeProvider, CircularProgress } from "~/theme";
 import { History, createBrowserHistory } from "history";
+import "~/dashboard.css";
+import "~/common.ts";
 
 const NotFound = () => {
   return <Page title="Not found">Not found</Page>;
 };
+
+const ms = 0;
+const lazyPage = (fun: any) => {
+  return lazy(async () => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+    return await fun();
+  });
+};
+
+const Dashboard = lazyPage(() => import("~/scenes/Dashboard"));
+const YearPage = lazyPage(() => import("~/scenes/YearPage"));
+const MonthPage = lazyPage(() => import("~/scenes/MonthPage"));
+const DayPage = lazyPage(() => import("~/scenes/DayPage"));
 
 const routeMatcher: RouteMatcher = [
   [
@@ -56,6 +65,14 @@ const Router = (props: { children: React.ReactElement; history: History }) => {
 
 const history = createBrowserHistory();
 
+const AppLoader = () => {
+  return (
+    <div className="app-loader">
+      <CircularProgress />
+    </div>
+  );
+};
+
 const App = () => {
   const location = useLocation();
   const [config, setConfig, cStatus] =
@@ -65,14 +82,17 @@ const App = () => {
       setConfig(DEFAULT_CONFIG);
     }
   }, [config, cStatus]);
-  if (cStatus === LStatus.Loading) return null;
   const componentToRender = matchLocation(routeMatcher, location);
   return (
     <Router history={history}>
-      <AppContext.Provider value={{ config, setConfig }}>
-        <AppThemeProvider>
-          <div className="app">{componentToRender}</div>
-        </AppThemeProvider>
+      <AppContext.Provider
+        value={{ config: DEFAULT_CONFIG, setConfig: (() => {}) as any }}
+      >
+        <div className="app">
+          <Suspense fallback={<AppLoader />}>
+            <AppThemeProvider>{componentToRender}</AppThemeProvider>
+          </Suspense>
+        </div>
       </AppContext.Provider>
     </Router>
   );

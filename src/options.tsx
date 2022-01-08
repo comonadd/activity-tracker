@@ -9,12 +9,12 @@ import React, {
 import ReactDOM from "react-dom";
 import { useExtStorage } from "./util";
 import { DEFAULT_CONFIG, Configuration } from "~/configuration";
-import "./app.css";
-import "./options.css";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
+import "./app.scss";
+import "./options.scss";
 import jsonBeautify from "json-beautify";
 import { UserLogMessage, clearUserLogs, UserLog } from "~/userLog";
 import { recalculateRecordTypes } from "~/trackedRecord";
@@ -323,6 +323,14 @@ const OptionsPage = () => {
             <Typography component="h1" variant="h4" className="mb-4">
               Options
             </Typography>
+            <div className="lg-w-half w-full">
+              <Typography component="p" color="textSecondary" className="fs-14">
+                You can configure your activity matchers here. After saving, the
+                records will be updated automatically. "activityTypes" defines
+                the activity types and their value. "matcher" maps the website
+                domain to a particular activity type.
+              </Typography>
+            </div>
             <ConfigEditor />
             <LogsDisplay />
           </Page>

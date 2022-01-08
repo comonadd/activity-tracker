@@ -1,6 +1,6 @@
-* {
-  outline: none;
-}
+$appBg: #f2f2f2;
+$md: 968px;
+$lg: 1200px;
 
 :root {
   --white-color: #ffffff;
@@ -12,6 +12,11 @@
   --primary-color: #e9c46a;
 }
 
+* {
+  outline: none;
+  font-family: "Ubuntu", "sans-serif" !important;
+}
+
 body,
 html,
 #root {
@@ -20,6 +25,7 @@ html,
   padding: 0;
   margin: 0;
   overflow-x: hidden;
+  background: $appBg;
 }
 
 .prod-level-bar {
@@ -50,7 +56,7 @@ html,
   width: 100%;
   box-sizing: border-box;
   align-items: center;
-  background: #f2f2f2;
+  background: $appBg;
 }
 
 .page {
@@ -125,11 +131,11 @@ html,
 }
 
 .mb-4 {
-  margin-bottom: 8px;
+  margin-bottom: 8px !important;
 }
 
 .mb-8 {
-  margin-bottom: 16px;
+  margin-bottom: 16px !important;
 }
 
 .mb-2 {
@@ -194,4 +200,27 @@ html,
 
 .f-sauto {
   flex: 0 0 auto;
+}
+
+.fs-12 {
+  font-size: 12px !important;
+}
+
+.fs-14 {
+  font-size: 14px !important;
+}
+
+@media screen and (min-width: $lg) {
+  .lg-w-half {
+    width: 50%;
+  }
+}
+
+.app-loader {
+  width: 100%;
+  height: 100%;
+  background: $appBg;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

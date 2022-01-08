@@ -9,17 +9,29 @@
 
 .config-editor {
   width: 100%;
-  flex: 1 1 60%;
+  flex: 1 1 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .config-editor .editor {
   flex: 1 1 100%;
+  height: 100%;
 }
 
 .config-editor .edit-area {
   width: 100%;
+}
+
+.CodeMirror {
+  height: auto !important;
+  border: 1px solid #eee;
+  padding: 8px;
+
+  .CodeMirror-code {
+    font-size: 14px;
+  }
 }
 
 .config-editor textarea.editor-textarea {

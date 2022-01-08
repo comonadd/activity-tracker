@@ -43,7 +43,7 @@ module.exports = {
   output: {
     path: BUILD,
     filename: "[name].min.js", // string (default)
-    publicPath: "/assets/", // string
+    publicPath: "/", // string
     uniqueName: "activity-tracker-chrome",
   },
   module: {
@@ -66,6 +66,17 @@ module.exports = {
         exclude: /node_modules/,
       },
       {
+        test: /\.s[ac]ss$/i,
+        use: [
+          // Creates `style` nodes from JS strings
+          "style-loader",
+          // Translates CSS into CommonJS
+          "css-loader",
+          // Compiles Sass to CSS
+          "sass-loader",
+        ],
+      },
+      {
         test: /\.css$/,
         use: ["style-loader", "css-loader"],
       },
@@ -81,9 +92,14 @@ module.exports = {
   devtool: DEV ? "inline-source-map" : "hidden-source-map", // enum
   context: __dirname, // string (absolute path!)
   target: "web", // enum
+
   optimization: {
     minimize: !DEV,
+    chunkIds: "named",
+    concatenateModules: true,
+    mangleExports: true,
   },
+
   plugins: [
     new CopyPlugin({
       patterns: [
