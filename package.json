@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack --watch -c ./webpack.config.js",
     "build-dev": "cross-env NODE_ENV=development webpack -c ./webpack.config.js",
+    "bundle-stats": "cross-env NODE_ENV=production webpack -c ./webpack.config.js --json > stats.json",
     "build": "cross-env NODE_ENV=production webpack -c ./webpack.config.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
