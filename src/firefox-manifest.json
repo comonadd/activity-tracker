@@ -1,7 +1,7 @@
 {
   "name": "ActivityTracker",
   "description": "Track and analyze your activity",
-  "version": "1.0",
+  "version": "0.0.1",
   "manifest_version": 2,
   "permissions": ["storage", "activeTab", "tabs"],
   "options_ui": {
