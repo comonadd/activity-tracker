@@ -1,4 +1,11 @@
-import React, { useContext, useMemo, useEffect, useState } from "react";
+import React, {
+  useContext,
+  useMemo,
+  useEffect,
+  useState,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import ReactDOM from "react-dom";
 import { useExtStorage } from "./util";
 import { DEFAULT_CONFIG, Configuration } from "~/configuration";
@@ -22,6 +29,10 @@ import { dateToString } from "~/dates";
 import ConfirmDialog from "~/components/ConfirmDialog";
 import Replay from "@mui/icons-material/Replay";
 import BreadcrumbsForPath from "./components/BreadcrumbsForPath";
+import CodeMirror from "codemirror";
+import "codemirror/lib/codemirror.css";
+import "codemirror/mode/javascript/javascript.js";
+import "codemirror/theme/idea.css";
 
 const ConfigEditor = () => {
   const { config, setConfig } = useContext(AppContext);
@@ -139,6 +150,27 @@ const ConfigEditor = () => {
     didSomethingChange,
   ]);
 
+  const textArea = useRef(null);
+  const codeMirror = useRef(null);
+  useLayoutEffect(() => {
+    if (textArea.current === null) return;
+    var myCodeMirror = CodeMirror.fromTextArea(textArea.current, {
+      value: configS,
+      mode: "javascript",
+      tabSize: 2,
+      spellcheck: true,
+      theme: "idea",
+    });
+    console.log(myCodeMirror);
+    codeMirror.current = myCodeMirror;
+  }, []);
+
+  useEffect(() => {
+    // debugger;
+    const editor = codeMirror.current;
+    editor.getDoc().setValue(configS);
+  }, [configS]);
+
   return (
     <div className="config-editor mb-8">
       <ConfirmDialog
@@ -151,18 +183,15 @@ const ConfigEditor = () => {
       />
       {renderedHeader}
       {error !== null && <FormHelperText error>{error.message}</FormHelperText>}
-      <TextField
-        spellCheck={false}
-        className="editor"
-        multiline
-        fullWidth
-        value={configS}
-        onChange={(e) => setConfigS(e.target.value)}
-        variant="outlined"
-        inputProps={{
-          className: "editor-textarea",
-        }}
-      />
+      <div className="editor">
+        <textarea
+          spellCheck={false}
+          value={configS}
+          onChange={(e) => setConfigS(e.target.value)}
+          className="editor-textarea"
+          ref={textArea}
+        />
+      </div>
     </div>
   );
 };
