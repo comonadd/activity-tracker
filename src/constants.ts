@@ -4,6 +4,9 @@ import {
   Configuration,
 } from "./configuration";
 import { Duration, durationMinutes } from "~/dates";
+import manifest from "~/chrome-manifest.json";
+
+export const APP_NAME = manifest.name;
 
 export const DB_NAME = "ti-main-db";
 export const TRACK_INFO_STORE_NAME = "tracking-info";
