@@ -123,6 +123,12 @@ export function recordProd<AK extends ActTypeKey>(
   return perHour * durToHours(rec.duration);
 }
 
+export const round = (n: number, digits: number) => {
+  const k = Math.pow(10, digits);
+  const res = Math.round(n * k) / k;
+  return res;
+};
+
 // Productivity is a measure of productive activity during the day. Ranges
 // from 0 to 10, 10 being the highest productivity.
 export const calcProductivityLevelForDay = (
@@ -134,7 +140,7 @@ export const calcProductivityLevelForDay = (
     const reward = recordProd(config, r);
     prod += reward;
   }
-  return prod;
+  return round(prod, 2);
 };
 
 export enum LStatus {

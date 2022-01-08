@@ -1,9 +1,10 @@
 import {
   calcProductivityLevelForDay,
   DefaultMap,
-  RGB,
   colorGradient,
   rgbToCSS,
+  round,
+  getProdPerc,
 } from "~/util";
 import { dateToString, monthName, monthAndYear } from "~/dates";
 import { useTheme, Typography, Paper } from "~/theme";
@@ -46,6 +47,7 @@ const CalendarDay = (props: {
   const pK = rangeK * productivityLevel;
   const pPerc = pK / highColorBound;
   const backgroundColor = rgbToCSS(colorGradient(lowColor, highColor, pPerc));
+  const prodPerc = getProdPerc(config, productivityLevel);
   return (
     <Paper
       elevation={1}
@@ -53,7 +55,7 @@ const CalendarDay = (props: {
       className="calendar-item"
       onClick={() => history.push(`/${year}/${month}/${day}`)}
       style={{ backgroundColor }}
-      title={`Productivity: ${productivityLevel}`}
+      title={`Productivity: ${prodPerc}%`}
     >
       <Typography variant="subtitle2">{dateToString(dayDate)}</Typography>
     </Paper>
@@ -165,7 +167,13 @@ const HistoryCalendar = (_: HistoryCalendarProps) => {
         )}
       </div>
     );
-  }, [loadingRecords, trackedRecordsGrouped, config, allDayDates]);
+  }, [
+    loadingRecords,
+    trackedRecordsGrouped,
+    config,
+    allDayDates,
+    allMonthsByYear,
+  ]);
 
   const loadMore = React.useCallback(() => {
     if (trackedRecordsP.loading) {
