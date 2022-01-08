@@ -7,7 +7,7 @@ import {
   TrackedRecordsGrouped,
   trackedRecordFetcher,
 } from "~/trackedRecord";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import CircularProgress from "@mui/material/CircularProgress";
 import { usePagedPaginatedController } from "~/hooks";
 import { useQueryParam, history } from "~/routeManager";
 import AppContext from "~/AppContext";

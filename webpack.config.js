@@ -1,4 +1,3 @@
-const webpack = require("webpack");
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const fs = require("fs");
@@ -10,6 +9,29 @@ const BUILD = path.resolve(__dirname, "build");
 const DIST = path.resolve(__dirname, "dist");
 const chromeOut = path.resolve(DIST, "chrome");
 const firefoxOut = path.resolve(DIST, "firefox");
+
+const babelOptions = {
+  plugins: [
+    [
+      "babel-plugin-import",
+      {
+        libraryName: "@mui/material",
+        libraryDirectory: "",
+        camel2DashComponentName: false,
+      },
+      "core",
+    ],
+    [
+      "babel-plugin-import",
+      {
+        libraryName: "@mui/icons-material",
+        libraryDirectory: "",
+        camel2DashComponentName: false,
+      },
+      "icons",
+    ],
+  ],
+};
 
 module.exports = {
   mode: DEV ? "development" : "production",
@@ -29,10 +51,18 @@ module.exports = {
       {
         test: /\.tsx?$/,
         include: [path.resolve(__dirname, "src")],
-        use: {
-          loader: "ts-loader",
-          options: { configFile: DEV ? "tsconfig.dev.json" : "tsconfig.json" },
-        },
+        use: [
+          {
+            loader: "babel-loader",
+            options: babelOptions,
+          },
+          {
+            loader: "ts-loader",
+            options: {
+              configFile: DEV ? "tsconfig.dev.json" : "tsconfig.json",
+            },
+          },
+        ],
         exclude: /node_modules/,
       },
       {

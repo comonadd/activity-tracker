@@ -18,7 +18,7 @@ import {
   Menu,
   MenuItem,
 } from "~/theme";
-import MoreVertIcon from "@material-ui/icons/MoreVert";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import HistoryCalendar from "./HistoryCalendar";
 import DashboardContext from "./DashboardContext";
 import FullHistoryList from "./FullHistoryList";

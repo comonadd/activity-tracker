@@ -8,8 +8,8 @@ import {
   Box,
   IconButton,
   Typography,
-} from "@material-ui/core";
-import Close from "@material-ui/icons/Close";
+} from "@mui/material";
+import Close from "@mui/icons-material/Close";
 
 const ConfirmDialog = (props: {
   onClose: () => void;

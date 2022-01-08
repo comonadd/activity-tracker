@@ -19,7 +19,7 @@ import {
   trackedRecordFetcher,
 } from "~/trackedRecord";
 import Sentry from "~/components/ScrollSentry";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import CircularProgress from "@mui/material/CircularProgress";
 
 interface HistoryCalendarProps {}
 
