@@ -7,6 +7,7 @@ export type ActivityType = string | null;
 export interface ActivityDesc {
   description: string;
   reward: number;
+  ask?: boolean;
 }
 export type ActTypeKey = string;
 export type ActivityTypesMapping<AK extends ActTypeKey> = Record<

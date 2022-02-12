@@ -21,6 +21,8 @@ const shouldIgnoreUrl = (url: string) => {
   return rxp.test(url);
 };
 
+const TRACKER_BLOCK_PAGE = "https://google.com";
+
 const trackUrl = async (url: string) => {
   if (shouldIgnoreUrl(url)) return;
   const t = calculateUrlType(state.config, url);
@@ -35,7 +37,14 @@ const trackUrl = async (url: string) => {
     type: t,
     duration: 0,
   };
-  await addTrackedItem(item);
+  console.log("checking", t);
+  if (state.config.activityTypes[t].ask) {
+    console.log("updating tab page");
+    chrome.tabs.update({ url: TRACKER_BLOCK_PAGE });
+  } else {
+    console.log("no match");
+    await addTrackedItem(item);
+  }
 };
 
 const subcribeToExtStorageChangesOf = <T>(
@@ -52,6 +61,9 @@ const subcribeToExtStorageChangesOf = <T>(
 
 const tabListener = (tabId: number, changeInfo: { url: string }, tab: any) => {
   if (changeInfo.url) {
+    // need this to not get infinite loop when redirecting to a "blocked" page
+    const shouldIgnore = changeInfo.url === TRACKER_BLOCK_PAGE;
+    if (shouldIgnore) return;
     trackUrl(changeInfo.url);
   }
 };

@@ -31,6 +31,7 @@ export const DEFAULT_ACTIVITY_TYPES: ActivityTypesMapping<DAT> = {
   dumbEntertainment: {
     description: "Harmful entertainment: instagram, youtube",
     reward: 1,
+    ask: true,
   },
   reading: {
     description: "Reading stuff",

@@ -5,6 +5,7 @@ import React, {
   useState,
   useRef,
   useLayoutEffect,
+  useCallback,
 } from "react";
 import ReactDOM from "react-dom";
 import { useExtStorage } from "./util";
@@ -29,20 +30,25 @@ import { dateToString } from "~/dates";
 import ConfirmDialog from "~/components/ConfirmDialog";
 import Replay from "@mui/icons-material/Replay";
 import BreadcrumbsForPath from "./components/BreadcrumbsForPath";
-import CodeMirror from "codemirror";
+import CodeMirror, { EditorEventMap, EditorFromTextArea } from "codemirror";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/theme/idea.css";
+import debounce from "@mui/utils/debounce";
 
 const ConfigEditor = () => {
   const { config, setConfig } = useContext(AppContext);
   const [error, setError] = useState(null);
   const [initialConfigS, setInitialConfigS] = useState<string>("");
+  const [loadingConfig, setLoadingConfig] = useState(true);
   const [configS, setConfigS] = useState<string>("");
   useEffect(() => {
     const jsonS = jsonBeautify(config, null, 2, 100);
     setInitialConfigS(jsonS);
     setConfigS(jsonS);
+    if (jsonS === "null") return;
+    console.log("loaded", jsonS);
+    setLoadingConfig(false);
   }, [config]);
 
   const [saving, setSaving] = useState(false);
@@ -150,26 +156,45 @@ const ConfigEditor = () => {
     didSomethingChange,
   ]);
 
+  type OnChange = EditorEventMap["change"];
+  const onChange: OnChange = useCallback(
+    debounce((codeMirror, change) => {
+      const newValue = codeMirror.getValue();
+      setConfigS(newValue);
+    }, 500),
+    []
+  );
+
+  // Setup codemirror
   const textArea = useRef(null);
   const codeMirror = useRef(null);
   useLayoutEffect(() => {
+    if (loadingConfig) return;
     if (textArea.current === null) return;
-    var myCodeMirror = CodeMirror.fromTextArea(textArea.current, {
-      value: configS,
-      mode: "javascript",
-      tabSize: 2,
-      spellcheck: true,
-      theme: "idea",
-    });
-    console.log(myCodeMirror);
+    const myCodeMirror: EditorFromTextArea = CodeMirror.fromTextArea(
+      textArea.current,
+      {
+        value: configS,
+        mode: {
+          name: "javascript",
+          jsonld: true,
+          json: true,
+        },
+        tabSize: 2,
+        spellcheck: true,
+        theme: "idea",
+      }
+    );
     codeMirror.current = myCodeMirror;
-  }, []);
+    myCodeMirror.on("change", onChange);
+  }, [loadingConfig]);
 
-  useEffect(() => {
-    // debugger;
-    const editor = codeMirror.current;
-    editor.getDoc().setValue(configS);
-  }, [configS]);
+  // useEffect(() => {
+  //   const editor = codeMirror.current;
+  //   editor.getDoc().setValue(configS);
+  // }, [configS]);
+
+  if (loadingConfig) return null;
 
   return (
     <div className="config-editor mb-8">
@@ -186,8 +211,7 @@ const ConfigEditor = () => {
       <div className="editor">
         <textarea
           spellCheck={false}
-          value={configS}
-          onChange={(e) => setConfigS(e.target.value)}
+          defaultValue={configS}
           className="editor-textarea"
           ref={textArea}
         />

@@ -8,6 +8,9 @@
     "build-dev": "cross-env NODE_ENV=development webpack -c ./webpack.config.js",
     "bundle-stats": "cross-env NODE_ENV=production webpack -c ./webpack.config.js --json > stats.json",
     "build": "cross-env NODE_ENV=production webpack -c ./webpack.config.js",
+    "dist-chrome": "rm -rf dist/chrome/*.map && zip -r dist/chrome.zip dist/chrome",
+    "dist-firefox": "rm -rf dist/firefox/*.map && zip -r dist/firefox.zip dist/firefox",
+    "build-dist": "npm run build && npm run dist-chrome && npm run dist-firefox",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
